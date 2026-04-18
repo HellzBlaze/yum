@@ -25,7 +25,8 @@
         body { background-color: var(--bg-color); color: var(--text-dark); height: 100vh; display: flex; flex-direction: column; }
 
         header { background-color: var(--primary); padding: 1rem; color: white; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 10; display: flex; justify-content: space-between; align-items: center;}
-        .cashier-badge { background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;}
+        .cashier-badge { background: rgba(0,0,0,0.2); padding: 8px 15px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; cursor: pointer; transition: 0.2s;}
+        .cashier-badge:hover { background: rgba(0,0,0,0.4); }
 
         nav { display: flex; justify-content: center; gap: 10px; background: #fff; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex-wrap: wrap;}
 
@@ -39,7 +40,6 @@
 
         /* --- REGISTER TAB --- */
         #register-layout { display: grid; grid-template-columns: 350px 1fr; gap: 20px; height: calc(100vh - 180px); min-height: 600px; transition: 0.3s;}
-        .locked-blur { filter: blur(8px); pointer-events: none; user-select: none; }
 
         @media (max-width: 900px) {
             #register-layout { grid-template-columns: 1fr; height: auto; }
@@ -136,18 +136,15 @@
         .stat-card h3 { margin-bottom: 5px; color: #636e72;}
         .stat-card .val { font-size: 2rem; font-weight: bold; color: var(--secondary);}
         .danger-zone { background: #ffeaa7; padding: 20px; border-radius: 12px; border: 2px solid #fdcb6e; margin-top: 20px;}
-        
-        /* Auth Overlay on Register */
-        #registerAuthOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); backdrop-filter: blur(5px); z-index: 50; display: flex; justify-content: center; align-items: center; border-radius: 12px;}
-        #registerAuthOverlay.hidden { display: none; }
     </style>
 </head>
 <body>
 
     <header>
-        <div style="width: 150px;"></div> <h1>Yum OMS</h1>
+        <div style="width: 150px;"></div>
+        <h1>Yum OMS</h1>
         <div style="width: 150px; text-align: right;">
-            <span class="cashier-badge" id="headerCashierLabel">No Cashier</span>
+            <span class="cashier-badge" id="headerCashierLabel" onclick="promptRegisterUnlock()">Cashier: Unassigned ✎</span>
         </div>
     </header>
 
@@ -160,20 +157,11 @@
     </nav>
 
     <main id="register" class="tab-content active">
-        
-        <div id="registerAuthOverlay">
-            <div class="modal-content modal-mini">
-                <h2 style="color: var(--primary);">Register Locked</h2>
-                <p style="margin-bottom: 20px;">Manager or Admin authorization required to assign an employee to the register.</p>
-                <button class="submit-btn" onclick="promptRegisterUnlock()">Assign Employee</button>
-            </div>
-        </div>
-
-        <div id="register-layout" class="locked-blur">
+        <div id="register-layout">
             <div class="cart-panel">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h3>Current Order</h3>
-                    <button onclick="lockRegister()" style="background:none; border:none; color:#ff4757; font-weight:bold; cursor:pointer; text-decoration:underline;">Log Out</button>
+                    <button onclick="lockRegister()" style="background:none; border:none; color:#ff4757; font-weight:bold; cursor:pointer; text-decoration:underline; font-size:0.9rem;">Reset Cashier</button>
                 </div>
                 <div class="cart-items-container" id="cartItemsList"></div>
                 <div class="cart-totals">
@@ -206,9 +194,13 @@
     <main id="sales" class="tab-content">
         <div class="analytics-grid">
             <div>
-                <div class="stat-card">
+                <div class="stat-card" style="border-left-color: #2ed573;">
                     <h3>Total Revenue</h3>
                     <div class="val">₹<span id="statTotalRevenue">0</span></div>
+                </div>
+                <div class="stat-card" style="border-left-color: #f39c12;">
+                    <h3>Total Profit</h3>
+                    <div class="val">₹<span id="statTotalProfit">0</span></div>
                 </div>
                 <div class="stat-card" style="border-left-color: #1e90ff;">
                     <h3>Total Tips</h3>
@@ -221,10 +213,10 @@
             </div>
             
             <div class="right-section" style="height: auto; padding: 15px;">
-                <h3>Item Analytics (Units Sold)</h3>
-                <div style="overflow-y: auto; max-height: 300px;">
+                <h3>Item Analytics (Profit Margins)</h3>
+                <div style="overflow-y: auto; max-height: 350px;">
                     <table>
-                        <thead><tr><th>Item Name</th><th>Qty Sold</th><th>Revenue Generated</th></tr></thead>
+                        <thead><tr><th>Item Name</th><th>Qty Sold</th><th>Revenue</th><th>Profit</th></tr></thead>
                         <tbody id="analyticsTableBody"></tbody>
                     </table>
                 </div>
@@ -247,11 +239,12 @@
                 <div class="add-form">
                     <input type="text" id="newMenuName" placeholder="Item Name">
                     <input type="number" id="newMenuPrice" placeholder="Price (₹)">
+                    <input type="number" id="newMenuCost" placeholder="Cost (₹)">
                     <button onclick="addMenuItem()">Add Item</button>
                 </div>
                 <div style="overflow-x: auto;">
                     <table>
-                        <thead><tr><th>Name</th><th>Price</th><th>Actions</th></tr></thead>
+                        <thead><tr><th>Name</th><th>Price</th><th>Cost</th><th>Actions</th></tr></thead>
                         <tbody id="menuAdminBody"></tbody>
                     </table>
                 </div>
@@ -274,7 +267,6 @@
     </main>
 
     <main id="settings" class="tab-content">
-        
         <div class="admin-section">
             <div>
                 <h2>Manage Employees</h2>
@@ -314,7 +306,7 @@
                             <input type="password" value="****" disabled style="width:80px; font-size:1.2rem; text-align:center;">
                             <button class="action-btn" onclick="changePin('admin')">Change Admin PIN</button>
                         </div>
-                        <p style="font-size:0.85rem; color:#636e72; margin-top:5px;">Default: 1234. Unlocks Settings, Menu Admin, and Data Wipe.</p>
+                        <p style="font-size:0.85rem; color:#636e72; margin-top:5px;">Default: 1234. Unlocks Settings and Menu Admin.</p>
                     </div>
 
                     <hr style="margin: 15px 0; border: 1px dashed #dfe4ea;">
@@ -325,7 +317,7 @@
                             <input type="password" value="****" disabled style="width:80px; font-size:1.2rem; text-align:center;">
                             <button class="action-btn" onclick="changePin('manager')">Change Manager PIN</button>
                         </div>
-                        <p style="font-size:0.85rem; color:#636e72; margin-top:5px;">Default: 5678. Used strictly to assign Cashiers to the Register.</p>
+                        <p style="font-size:0.85rem; color:#636e72; margin-top:5px;">Default: 5678. Used to assign Cashiers to the Register.</p>
                     </div>
                 </div>
 
@@ -336,7 +328,6 @@
                 </div>
             </div>
         </div>
-
     </main>
 
     <div class="modal-overlay" id="itemModal">
@@ -375,7 +366,7 @@
             <select id="cashierSelect" style="width: 100%; padding: 12px; margin: 20px 0; font-size: 1.1rem; border-radius:8px;"></select>
             <div style="display:flex; gap:10px;">
                 <button class="btn-close" style="width:100%" onclick="closeModal('assignModal')">Cancel</button>
-                <button class="btn-confirm" style="width:100%" onclick="confirmCashier()">Unlock Register</button>
+                <button class="btn-confirm" style="width:100%" onclick="confirmCashier()">Set Cashier</button>
             </div>
         </div>
     </div>
@@ -393,13 +384,16 @@
         let adminPin = localStorage.getItem('yum_admin_pin') || '1234';
         let managerPin = localStorage.getItem('yum_manager_pin') || '5678';
         
-        let menuItems = safeParse('yum_menu', [{ id: 1, name: 'Burger', price: 150 }, { id: 2, name: 'Fries', price: 80 }]);
+        let menuItems = safeParse('yum_menu', [
+            { id: 1, name: 'Burger', price: 150, cost: 60 }, 
+            { id: 2, name: 'Fries', price: 80, cost: 25 }
+        ]);
         let globalToppings = safeParse('yum_toppings', [{ id: 1, name: 'Extra Cheese', price: 20 }]);
         let employees = safeParse('yum_employees', []);
         let orders = safeParse('yum_orders', []);
         
         let orderCounter = parseInt(localStorage.getItem('yum_counter')) || 100;
-        let currentCashier = null; 
+        let currentCashier = 'Unassigned'; 
 
         let currentCart = []; 
         let activePopupItem = null;
@@ -424,7 +418,7 @@
                 
                 if (entered !== adminPin) {
                     alert("Incorrect Master Admin PIN. Access Denied.");
-                    return; // Abort tab switch
+                    return; 
                 }
             }
 
@@ -435,7 +429,7 @@
             renderAll();
         }
 
-        // --- Register Authentication ---
+        // --- Register Authentication (Now Optional) ---
         function promptRegisterUnlock() {
             const entered = prompt("Enter Manager PIN (or Master Admin PIN) to assign an employee:");
             if (entered !== managerPin && entered !== adminPin) {
@@ -458,21 +452,13 @@
         function confirmCashier() {
             const select = document.getElementById('cashierSelect');
             currentCashier = select.value;
-            
-            document.getElementById('headerCashierLabel').innerText = `Cashier: ${currentCashier}`;
-            document.getElementById('registerAuthOverlay').classList.add('hidden');
-            document.getElementById('register-layout').classList.remove('locked-blur');
-            
+            document.getElementById('headerCashierLabel').innerText = `Cashier: ${currentCashier} ✎`;
             closeModal('assignModal');
         }
 
         function lockRegister() {
-            currentCashier = null;
-            document.getElementById('headerCashierLabel').innerText = `No Cashier`;
-            document.getElementById('registerAuthOverlay').classList.remove('hidden');
-            document.getElementById('register-layout').classList.add('locked-blur');
-            currentCart = [];
-            updateCartUI();
+            currentCashier = 'Unassigned';
+            document.getElementById('headerCashierLabel').innerText = `Cashier: Unassigned ✎`;
         }
 
         // --- Employee Management ---
@@ -525,23 +511,15 @@
                 if (old !== adminPin) return alert("Incorrect PIN.");
                 const newPin = prompt("Enter NEW Master Admin PIN (minimum 4 characters):");
                 if (newPin && newPin.trim().length >= 4) {
-                    adminPin = newPin.trim();
-                    saveData();
-                    alert("Master Admin PIN successfully changed.");
-                } else {
-                    alert("PIN must be at least 4 characters.");
-                }
+                    adminPin = newPin.trim(); saveData(); alert("Master Admin PIN successfully changed.");
+                } else { alert("PIN must be at least 4 characters."); }
             } else if (type === 'manager') {
                 const old = prompt("Enter current Manager PIN (or Master Admin PIN):");
                 if (old !== managerPin && old !== adminPin) return alert("Incorrect PIN.");
                 const newPin = prompt("Enter NEW Manager PIN (minimum 4 characters):");
                 if (newPin && newPin.trim().length >= 4) {
-                    managerPin = newPin.trim();
-                    saveData();
-                    alert("Manager PIN successfully changed.");
-                } else {
-                    alert("PIN must be at least 4 characters.");
-                }
+                    managerPin = newPin.trim(); saveData(); alert("Manager PIN successfully changed.");
+                } else { alert("PIN must be at least 4 characters."); }
             }
         }
 
@@ -559,12 +537,30 @@
         function addMenuItem() {
             const name = document.getElementById('newMenuName').value.trim();
             const price = parseFloat(document.getElementById('newMenuPrice').value);
+            const cost = parseFloat(document.getElementById('newMenuCost').value) || 0; // Cost added
             if (!name || isNaN(price)) return alert("Valid name and price required.");
-            menuItems.push({ id: Date.now(), name, price });
+            menuItems.push({ id: Date.now(), name, price, cost });
             document.getElementById('newMenuName').value = '';
             document.getElementById('newMenuPrice').value = '';
+            document.getElementById('newMenuCost').value = '';
             saveData();
         }
+        
+        function editMenuItem(id) {
+            const item = menuItems.find(m => m.id === id);
+            const newName = prompt("Edit Item Name:", item.name);
+            if (newName === null || newName.trim() === "") return;
+            const newPrice = prompt("Edit Item Price:", item.price);
+            if (newPrice === null || isNaN(parseFloat(newPrice))) return;
+            const newCost = prompt("Edit Item Cost (for profit calculation):", item.cost || 0);
+            if (newCost === null || isNaN(parseFloat(newCost))) return;
+            
+            item.name = newName.trim();
+            item.price = parseFloat(newPrice);
+            item.cost = parseFloat(newCost);
+            saveData();
+        }
+        
         function deleteMenuItem(id) { if(confirm("Delete item?")) { menuItems = menuItems.filter(m => m.id !== id); saveData(); } }
 
         function addTopping() {
@@ -610,6 +606,10 @@
 
             const unitPrice = parseFloat(activePopupItem.price) + toppingsPrice;
             const totalPrice = unitPrice * qty;
+            
+            // Calculate base cost of the item 
+            const unitCost = parseFloat(activePopupItem.cost) || 0;
+            const totalCost = unitCost * qty; 
 
             const existingIndex = currentCart.findIndex(item => 
                 item.menuId === activePopupItem.id && item.note === note && JSON.stringify(item.toppings) === JSON.stringify(toppings)
@@ -618,8 +618,12 @@
             if (existingIndex > -1) {
                 currentCart[existingIndex].qty += qty;
                 currentCart[existingIndex].totalPrice += totalPrice;
+                currentCart[existingIndex].totalCost += totalCost;
             } else {
-                currentCart.push({ id: Date.now(), menuId: activePopupItem.id, name: activePopupItem.name, qty, unitPrice, totalPrice, note, toppings });
+                currentCart.push({ 
+                    id: Date.now(), menuId: activePopupItem.id, name: activePopupItem.name, 
+                    qty, unitPrice, totalPrice, totalCost, note, toppings 
+                });
             }
             closeModal('itemModal');
             updateCartUI();
@@ -650,13 +654,13 @@
 
         function submitOrder() {
             if (currentCart.length === 0) return alert("Cart is empty.");
-            if (!currentCashier) return alert("System Error: No Cashier Assigned.");
 
             const subtotal = currentCart.reduce((sum, item) => sum + item.totalPrice, 0);
+            const totalCost = currentCart.reduce((sum, item) => sum + (item.totalCost || 0), 0);
             const tip = parseFloat(document.getElementById('cartTip').value) || 0;
 
             orders.push({
-                id: ++orderCounter, items: [...currentCart], subtotal, tip, total: subtotal + tip,
+                id: ++orderCounter, items: [...currentCart], subtotal, totalCost, tip, total: subtotal + tip,
                 status: 'Pending', cashier: currentCashier, timestamp: new Date().getTime()
             });
 
@@ -701,7 +705,7 @@
 
         function renderAll() {
             // Admin Menus
-            document.getElementById('menuAdminBody').innerHTML = menuItems.map(m => `<tr><td>${m.name}</td><td>₹${m.price}</td><td><button class="btn-delete table-actions" onclick="deleteMenuItem(${m.id})">Delete</button></td></tr>`).join('');
+            document.getElementById('menuAdminBody').innerHTML = menuItems.map(m => `<tr><td>${m.name}</td><td>₹${m.price}</td><td>₹${m.cost || 0}</td><td class="table-actions"><button class="btn-edit" onclick="editMenuItem(${m.id})">Edit</button><button class="btn-delete" onclick="deleteMenuItem(${m.id})">Delete</button></td></tr>`).join('');
             document.getElementById('toppingsAdminBody').innerHTML = globalToppings.map(t => `<tr><td>${t.name}</td><td>₹${t.price}</td><td><button class="btn-delete table-actions" onclick="deleteTopping(${t.id})">Delete</button></td></tr>`).join('');
             document.getElementById('employeeTableBody').innerHTML = employees.map(e => `<tr><td>${e.id}</td><td>${e.name}</td><td>${e.sector}</td><td>${e.role}</td><td><button class="btn-delete table-actions" onclick="deleteEmployee(${e.internalId})">Remove</button></td></tr>`).join('');
             
@@ -710,7 +714,7 @@
             document.getElementById('kitchenGrid').innerHTML = '';
             document.getElementById('completedOrdersGrid').innerHTML = '';
 
-            let totalRev = 0, totalTips = 0, totalOrders = 0;
+            let totalRev = 0, totalTips = 0, totalOrders = 0, totalProfit = 0;
             let itemAnalytics = {};
 
             orders.forEach(o => {
@@ -724,10 +728,14 @@
                     totalTips += o.tip;
                     totalOrders++;
                     
+                    // Order Profit = Subtotal (Price) - Total Cost 
+                    totalProfit += (o.subtotal - (o.totalCost || 0));
+                    
                     o.items.forEach(i => {
-                        if (!itemAnalytics[i.name]) itemAnalytics[i.name] = { qty: 0, revenue: 0 };
+                        if (!itemAnalytics[i.name]) itemAnalytics[i.name] = { qty: 0, revenue: 0, profit: 0 };
                         itemAnalytics[i.name].qty += i.qty;
                         itemAnalytics[i.name].revenue += i.totalPrice;
+                        itemAnalytics[i.name].profit += (i.totalPrice - (i.totalCost || 0));
                     });
                 }
             });
@@ -736,10 +744,11 @@
             document.getElementById('statTotalRevenue').innerText = totalRev;
             document.getElementById('statTotalTips').innerText = totalTips;
             document.getElementById('statTotalOrders').innerText = totalOrders;
+            document.getElementById('statTotalProfit').innerText = totalProfit;
             
             const sortedItems = Object.entries(itemAnalytics).sort((a, b) => b[1].qty - a[1].qty);
             document.getElementById('analyticsTableBody').innerHTML = sortedItems.map(([name, data]) => `
-                <tr><td><b>${name}</b></td><td>${data.qty}</td><td>₹${data.revenue}</td></tr>
+                <tr><td><b>${name}</b></td><td>${data.qty}</td><td>₹${data.revenue}</td><td style="color:#2ed573; font-weight:bold;">₹${data.profit}</td></tr>
             `).join('');
 
             // Sales History Table
