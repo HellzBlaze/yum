@@ -6,11 +6,19 @@
     <title>Yum - Restaurant OMS</title>
     <style>
         :root {
-            --bg-color: #f4f4f9;
-            --primary: #ff6b6b;
+            --bg-color: #f4f6f8;
+            --primary: #ff4757;
+            --primary-hover: #ff6b81;
+            --secondary: #2f3542;
             --text-dark: #2d3436;
             --card-bg: #ffffff;
             --border-radius: 12px;
+            
+            /* Status Colors */
+            --color-pending: #ffeaa7;
+            --color-received: #81ecec;
+            --color-preparing: #fab1a0;
+            --color-prepared: #55efc4;
         }
 
         * {
@@ -23,14 +31,18 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* Navbar & Tabs */
         header {
             background-color: var(--primary);
             padding: 1rem;
             color: white;
             text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 10;
         }
 
         nav {
@@ -39,128 +51,207 @@
             gap: 10px;
             background: #fff;
             padding: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
         .tab-btn {
-            padding: 10px 20px;
+            padding: 10px 25px;
             border: none;
-            background: #eee;
+            background: #f1f2f6;
             cursor: pointer;
-            border-radius: 20px;
+            border-radius: 25px;
             font-weight: bold;
-            transition: 0.3s;
+            font-size: 1rem;
+            color: var(--secondary);
+            transition: all 0.3s ease;
         }
 
         .tab-btn.active {
             background: var(--primary);
             color: white;
+            box-shadow: 0 4px 10px rgba(255, 71, 87, 0.3);
         }
 
-        /* Content Area */
         .tab-content {
             display: none;
+            flex: 1;
             padding: 20px;
-            max-width: 1200px;
-            margin: auto;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            overflow-y: auto;
         }
 
         .tab-content.active {
             display: block;
         }
 
-        /* Forms */
-        .register-form {
+        h2, h3 { color: var(--secondary); margin-bottom: 15px; }
+
+        /* --- REGISTER TAB LAYOUT (Based on Schematic) --- */
+        #register-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+            height: calc(100vh - 180px); /* Fill remaining space */
+        }
+
+        /* Left Side: Cart */
+        .cart-panel {
             background: var(--card-bg);
-            padding: 20px;
             border-radius: var(--border-radius);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            max-width: 400px;
-            margin: auto;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
+            padding: 20px;
+            border: 2px solid #dfe4ea;
+        }
+
+        .cart-items-container {
+            flex: 1;
+            border: 2px solid #dfe4ea;
+            border-radius: 12px;
+            padding: 10px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            background: #fcfcfc;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed #ccc;
+            font-weight: bold;
+        }
+        .cart-item button {
+            background: #ff4757; color: white; border: none; border-radius: 4px; cursor: pointer; padding: 2px 6px;
+        }
+
+        .cart-totals {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .cart-totals div {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .tip-input {
+            width: 80px;
+            padding: 5px;
+            font-size: 1.1rem;
+            text-align: right;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        .submit-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+            border: 2px solid #2d3436;
+        }
+        .submit-btn:hover { background: var(--primary-hover); transform: translateY(-2px); }
+
+        /* Right Side: Split View */
+        .right-panel {
+            display: grid;
+            grid-template-rows: 1fr 1fr;
+            gap: 20px;
+            height: 100%;
+        }
+
+        .right-section {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border: 2px solid #dfe4ea;
+            overflow-y: auto;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 15px;
         }
 
-        input, button {
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-        }
-
-        button.submit-btn {
-            background-color: var(--primary);
+        .menu-btn {
+            background: #1e90ff;
             color: white;
-            border: none;
-            cursor: pointer;
+            border: 2px solid #2d3436;
+            padding: 15px;
+            border-radius: 12px;
             font-weight: bold;
+            cursor: pointer;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: 0.1s;
         }
+        .menu-btn:active { transform: scale(0.95); }
+        .menu-btn span { font-size: 0.9rem; opacity: 0.9; margin-top: 5px; }
 
-        /* Grid & Cards (Based on your image) */
+        /* --- ORDER CARDS (Kitchen & Completed) --- */
         .order-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
         }
 
         .order-card {
-            background: var(--card-bg);
-            border: 2px solid #2d3436;
-            border-radius: 20px;
+            border-radius: 16px;
             padding: 15px;
-            position: relative;
             display: flex;
             flex-direction: column;
-            min-height: 150px;
-            justify-content: space-between;
+            border: 2px solid #2d3436;
+            box-shadow: 0 4px 0px rgba(0,0,0,0.1);
         }
+
+        .card-pending { background-color: var(--color-pending); }
+        .card-received { background-color: var(--color-received); }
+        .card-preparing { background-color: var(--color-preparing); }
+        .card-prepared { background-color: var(--color-prepared); }
 
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 2px solid rgba(0,0,0,0.1);
+            padding-bottom: 8px;
+            margin-bottom: 10px;
         }
 
-        .order-no {
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
+        .order-no { font-size: 1.2rem; font-weight: 900; }
+        .status-badge { background: white; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.8rem; border: 1px solid #2d3436;}
+        
+        .order-items-list { flex: 1; margin-bottom: 15px; font-size: 1.1rem; line-height: 1.4; }
+        
+        .card-actions { display: flex; gap: 5px; }
+        .action-btn { flex: 1; background: var(--secondary); color: white; border: 2px solid #2d3436; padding: 8px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .cancel-btn { background: var(--primary); color: white; border: 2px solid #2d3436; padding: 8px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
-        .status-badge {
-            border: 2px solid #2d3436;
-            padding: 5px 15px;
-            border-radius: 10px;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
+        /* --- TABLES & FORMS --- */
+        .form-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        input[type="text"], input[type="number"] { padding: 10px; border-radius: 8px; border: 1px solid #ced6e0; font-size: 16px; }
+        .btn-primary { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
-        .order-details {
-            margin: 15px 0;
-            color: #636e72;
-        }
-
-        .action-btn {
-            align-self: flex-start;
-            background: white;
-            border: 2px solid #2d3436;
-            padding: 5px 15px;
-            border-radius: 10px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .action-btn:hover {
-            background: #eee;
-        }
-
-        /* Sales Summary */
-        .sales-summary {
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-            font-weight: bold;
-        }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: var(--border-radius); overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #dfe4ea; }
+        th { background: var(--secondary); color: white; }
     </style>
 </head>
 <body>
@@ -170,17 +261,42 @@
     </header>
 
     <nav>
+        <button class="tab-btn" onclick="switchTab('menu')">Menu Setup</button>
         <button class="tab-btn active" onclick="switchTab('register')">Register</button>
         <button class="tab-btn" onclick="switchTab('kitchen')">Kitchen</button>
-        <button class="tab-btn" onclick="switchTab('sales')">Sales</button>
+        <button class="tab-btn" onclick="switchTab('sales')">Sales & Analytics</button>
     </nav>
 
     <main id="register" class="tab-content active">
-        <div class="register-form">
-            <h2>New Order</h2>
-            <input type="text" id="itemName" placeholder="Item Name (e.g. Burger)">
-            <input type="number" id="itemPrice" placeholder="Price (₹)">
-            <button class="submit-btn" onclick="createOrder()">Create Order</button>
+        <div id="register-layout">
+            <div class="cart-panel">
+                <h3>Current Order</h3>
+                <div class="cart-items-container" id="cartItemsList">
+                    </div>
+                
+                <div class="cart-totals">
+                    <div><span>Subtotal:</span> <span>₹<span id="cartSubtotal">0</span></span></div>
+                    <div><span>Tip:</span> <input type="number" id="cartTip" class="tip-input" value="0" min="0" oninput="updateCartUI()"></div>
+                    <hr style="margin: 5px 0; border: 1px solid #dfe4ea;">
+                    <div><span>Total:</span> <span style="color: var(--primary);">₹<span id="cartTotal">0</span></span></div>
+                </div>
+
+                <button class="submit-btn" onclick="submitOrder()">Submit Order</button>
+            </div>
+
+            <div class="right-panel">
+                <div class="right-section">
+                    <h3>Completed Orders (Ready for Pickup)</h3>
+                    <div class="order-grid" id="completedOrdersGrid">
+                        </div>
+                </div>
+                
+                <div class="right-section">
+                    <h3>Items</h3>
+                    <div class="menu-grid" id="posMenuGrid">
+                        </div>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -190,123 +306,242 @@
     </main>
 
     <main id="sales" class="tab-content">
-        <div class="sales-summary">Total Sales: ₹<span id="totalSales">0</span></div>
-        <h2>Completed & Ready</h2>
-        <div class="order-grid" id="salesGrid"></div>
+        <h2>Sales History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Order No</th>
+                    <th>Items</th>
+                    <th>Subtotal</th>
+                    <th>Tip</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="salesTableBody"></tbody>
+        </table>
+    </main>
+
+    <main id="menu" class="tab-content">
+        <h2>Manage Menu Items</h2>
+        <div class="form-group">
+            <input type="text" id="newMenuName" placeholder="Item Name (e.g. Burger)">
+            <input type="number" id="newMenuPrice" placeholder="Price (₹)">
+            <button class="btn-primary" onclick="addMenuItem()">Add to Menu</button>
+        </div>
+        <table style="max-width: 600px;">
+            <thead><tr><th>Item Name</th><th>Price</th><th>Action</th></tr></thead>
+            <tbody id="menuAdminBody"></tbody>
+        </table>
     </main>
 
     <script>
-        // Data Structure & Storage
+        // --- State Management ---
+        let menuItems = JSON.parse(localStorage.getItem('yum_menu')) || [
+            { id: 1, name: 'Burger', price: 150 },
+            { id: 2, name: 'Fries', price: 80 },
+            { id: 3, name: 'Soda', price: 50 },
+            { id: 4, name: 'Pizza', price: 299 }
+        ];
         let orders = JSON.parse(localStorage.getItem('yum_orders')) || [];
-        let orderCounter = parseInt(localStorage.getItem('yum_counter')) || 1000;
+        let orderCounter = parseInt(localStorage.getItem('yum_counter')) || 100;
+        
+        let currentCart = []; // Holds items for the current ticket
 
+        // Save everything to LocalStorage (LAN Sync Simulation)
         function saveData() {
+            localStorage.setItem('yum_menu', JSON.stringify(menuItems));
             localStorage.setItem('yum_orders', JSON.stringify(orders));
             localStorage.setItem('yum_counter', orderCounter);
-            renderOrders();
+            renderAll();
         }
 
-        // Tab Logic
+        // --- Tab Navigation ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            
             document.getElementById(tabId).classList.add('active');
             event.target.classList.add('active');
-            renderOrders();
+            renderAll();
         }
 
-        // Create Order
-        function createOrder() {
-            const name = document.getElementById('itemName').value;
-            const price = parseFloat(document.getElementById('itemPrice').value);
+        // --- Menu Management ---
+        function addMenuItem() {
+            const name = document.getElementById('newMenuName').value.trim();
+            const price = parseFloat(document.getElementById('newMenuPrice').value);
+            if (!name || isNaN(price)) return alert("Invalid details.");
+            
+            menuItems.push({ id: Date.now(), name, price });
+            document.getElementById('newMenuName').value = '';
+            document.getElementById('newMenuPrice').value = '';
+            saveData();
+        }
 
-            if (!name || isNaN(price)) {
-                alert("Please enter valid item details.");
-                return;
+        function deleteMenuItem(id) {
+            menuItems = menuItems.filter(item => item.id !== id);
+            saveData();
+        }
+
+        // --- Register / Cart Logic ---
+        function addToCart(menuId) {
+            const item = menuItems.find(m => m.id === menuId);
+            if (item) {
+                currentCart.push({ id: Date.now() + Math.random(), name: item.name, price: item.price });
+                updateCartUI();
             }
+        }
+
+        function removeFromCart(cartItemId) {
+            currentCart = currentCart.filter(item => item.id !== cartItemId);
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const list = document.getElementById('cartItemsList');
+            list.innerHTML = '';
+            let subtotal = 0;
+
+            currentCart.forEach(item => {
+                subtotal += item.price;
+                list.innerHTML += `
+                    <div class="cart-item">
+                        <span>${item.name}</span>
+                        <div>
+                            <span>₹${item.price}</span>
+                            <button onclick="removeFromCart(${item.id})">X</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            const tip = parseFloat(document.getElementById('cartTip').value) || 0;
+            const total = subtotal + tip;
+
+            document.getElementById('cartSubtotal').innerText = subtotal;
+            document.getElementById('cartTotal').innerText = total;
+        }
+
+        function submitOrder() {
+            if (currentCart.length === 0) return alert("Cart is empty!");
+
+            const subtotal = currentCart.reduce((sum, item) => sum + item.price, 0);
+            const tip = parseFloat(document.getElementById('cartTip').value) || 0;
+            const total = subtotal + tip;
 
             const newOrder = {
                 id: ++orderCounter,
-                item: name,
-                price: price,
-                status: 'Pending' // Initial state before 'Mark Received'
+                items: [...currentCart], // Clone array
+                subtotal, tip, total,
+                status: 'Pending',
+                timestamp: new Date().getTime()
             };
 
             orders.push(newOrder);
+            currentCart = []; // Clear cart
+            document.getElementById('cartTip').value = '0';
             saveData();
-            
-            document.getElementById('itemName').value = '';
-            document.getElementById('itemPrice').value = '';
-            alert(`Order #${newOrder.id} created!`);
+            updateCartUI();
         }
 
-        // Status Flow Logic
-        const nextStatusMap = {
-            'Pending': { next: 'Received', actionText: 'Mark Received' },
-            'Received': { next: 'Preparing', actionText: 'Mark Preparing' },
-            'Preparing': { next: 'Prepared', actionText: 'Mark Prepared' },
-            'Prepared': { next: 'Collected', actionText: 'Mark Collected' },
-            'Collected': { next: null, actionText: null }
-        };
-
-        function updateStatus(orderId, newStatus) {
-            const orderIndex = orders.findIndex(o => o.id === orderId);
-            if (orderIndex > -1) {
-                orders[orderIndex].status = newStatus;
+        function updateOrderStatus(orderId, newStatus) {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                order.status = newStatus;
                 saveData();
             }
         }
 
-        // Render UI
-        function renderOrders() {
+        // --- Rendering Engine ---
+        const statusConfig = {
+            'Pending': { next: 'Received', btn: 'Mark Received', color: 'card-pending' },
+            'Received': { next: 'Preparing', btn: 'Mark Preparing', color: 'card-received' },
+            'Preparing': { next: 'Prepared', btn: 'Mark Prepared', color: 'card-preparing' },
+            'Prepared': { next: 'Collected', btn: 'Mark Collected', color: 'card-prepared' }
+        };
+
+        function buildCard(order, showNextButton = true) {
+            const config = statusConfig[order.status];
+            if (!config) return '';
+
+            // Group duplicate items for display (e.g. "2x Burger")
+            const itemCounts = {};
+            order.items.forEach(i => itemCounts[i.name] = (itemCounts[i.name] || 0) + 1);
+            const itemsDisplay = Object.entries(itemCounts)
+                .map(([name, count]) => `• ${count}x ${name}`)
+                .join('<br>');
+
+            let actionHtml = '';
+            if (showNextButton && config.next) {
+                actionHtml = `<button class="action-btn" onclick="updateOrderStatus(${order.id}, '${config.next}')">${config.btn}</button>`;
+            }
+
+            return `
+                <div class="order-card ${config.color}">
+                    <div class="card-header">
+                        <span class="order-no">#${order.id}</span>
+                        <span class="status-badge">${order.status}</span>
+                    </div>
+                    <div class="order-items-list">${itemsDisplay}</div>
+                    <div class="card-actions">
+                        ${actionHtml}
+                        <button class="cancel-btn" onclick="updateOrderStatus(${order.id}, 'Cancelled')">Cancel</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAll() {
+            // 1. Render Menu Admin
+            document.getElementById('menuAdminBody').innerHTML = menuItems.map(item => `
+                <tr><td>${item.name}</td><td>₹${item.price}</td><td><button onclick="deleteMenuItem(${item.id})">Delete</button></td></tr>
+            `).join('');
+
+            // 2. Render POS Menu Buttons (Right side of Register)
+            document.getElementById('posMenuGrid').innerHTML = menuItems.map(item => `
+                <div class="menu-btn" onclick="addToCart(${item.id})">
+                    ${item.name} <span>₹${item.price}</span>
+                </div>
+            `).join('');
+
+            // 3. Render Order Grids
             const kitchenGrid = document.getElementById('kitchenGrid');
-            const salesGrid = document.getElementById('salesGrid');
-            
+            const completedGrid = document.getElementById('completedOrdersGrid');
             kitchenGrid.innerHTML = '';
-            salesGrid.innerHTML = '';
-            let totalRevenue = 0;
+            completedGrid.innerHTML = '';
 
             orders.forEach(order => {
-                // Calculate revenue for completed items
-                if (order.status === 'Collected') {
-                    totalRevenue += order.price;
-                }
-
-                // Build Card HTML based on your wireframe layout
-                const flow = nextStatusMap[order.status];
-                
-                let actionButtonHtml = '';
-                if (flow.actionText) {
-                    actionButtonHtml = `<button class="action-btn" onclick="updateStatus(${order.id}, '${flow.next}')">${flow.actionText}</button>`;
-                }
-
-                const cardHtml = `
-                    <div class="order-card">
-                        <div class="card-header">
-                            <span class="order-no">Order #${order.id}</span>
-                            <span class="status-badge">${order.status}</span>
-                        </div>
-                        <div class="order-details">
-                            ${order.item} - ₹${order.price}
-                        </div>
-                        ${actionButtonHtml}
-                    </div>
-                `;
-
-                // Route cards to correct tabs based on status
+                // Kitchen gets active cooking flow
                 if (['Pending', 'Received', 'Preparing'].includes(order.status)) {
-                    kitchenGrid.innerHTML += cardHtml;
-                } else if (['Prepared', 'Collected'].includes(order.status)) {
-                    salesGrid.innerHTML += cardHtml;
+                    kitchenGrid.innerHTML += buildCard(order);
+                }
+                // Register right-panel gets 'Prepared' so Cashier knows to hand it out
+                if (order.status === 'Prepared') {
+                    completedGrid.innerHTML += buildCard(order);
                 }
             });
 
-            document.getElementById('totalSales').innerText = totalRevenue;
+            // 4. Render Sales History Table
+            const salesTable = document.getElementById('salesTableBody');
+            salesTable.innerHTML = '';
+            [...orders].reverse().forEach(order => {
+                const itemSummary = order.items.map(i => i.name).join(', ');
+                let color = order.status === 'Cancelled' ? 'red' : (order.status === 'Collected' ? 'green' : 'black');
+                salesTable.innerHTML += `
+                    <tr>
+                        <td>#${order.id}</td>
+                        <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${itemSummary}</td>
+                        <td>₹${order.subtotal}</td>
+                        <td>₹${order.tip}</td>
+                        <td><b>₹${order.total}</b></td>
+                        <td style="color: ${color}; font-weight:bold;">${order.status}</td>
+                    </tr>
+                `;
+            });
         }
 
-        // Initialize
-        renderOrders();
+        // Boot up
+        renderAll();
+        updateCartUI();
     </script>
 </body>
 </html>
