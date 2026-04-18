@@ -291,7 +291,6 @@
             if (btnElement) {
                 btnElement.classList.add('active');
             } else {
-                // Fallback if triggered via code rather than click
                 let fallbackBtn = document.querySelector(`button[onclick*="'${tabId}'"]`);
                 if(fallbackBtn) fallbackBtn.classList.add('active');
             }
@@ -399,7 +398,6 @@
                 const unitPrice = parseFloat(activePopupItem.price) + toppingsPrice;
                 const totalPrice = unitPrice * qty;
 
-                // Check for exact duplicates in cart to merge them
                 const existingItemIndex = currentCart.findIndex(item => 
                     item.menuId === activePopupItem.id && item.note === note && JSON.stringify(item.toppings) === JSON.stringify(toppings)
                 );
@@ -459,7 +457,6 @@
                 `;
             });
 
-            // Safe parsing for tip
             const tipInput = document.getElementById('cartTip').value;
             const tipVal = parseFloat(tipInput);
             const tip = isNaN(tipVal) ? 0 : tipVal; 
@@ -494,8 +491,7 @@
             saveData();
             updateCartUI();
             
-            // Visual feedback
-            alert(`Order #${newOrder.id} submitted! It has been sent to the Kitchen.`);
+            // NOTE: The alert popup has been removed from here.
         }
 
         function updateOrderStatus(orderId, newStatus) {
@@ -543,7 +539,6 @@
         }
 
         function renderAll() {
-            // Admin Tables
             document.getElementById('menuAdminBody').innerHTML = menuItems.map(item => `
                 <tr>
                     <td>${item.name}</td><td>₹${item.price}</td>
@@ -564,12 +559,10 @@
                 </tr>
             `).join('');
             
-            // POS Menu Grid
             document.getElementById('posMenuGrid').innerHTML = menuItems.map(item => `
                 <div class="menu-btn" onclick="openModal(${item.id})">${item.name} <br><span>₹${item.price}</span></div>
             `).join('');
 
-            // Grids
             document.getElementById('kitchenGrid').innerHTML = '';
             document.getElementById('completedOrdersGrid').innerHTML = '';
 
@@ -577,13 +570,11 @@
                 if (['Pending', 'Received', 'Preparing'].includes(order.status)) {
                     document.getElementById('kitchenGrid').innerHTML += buildCard(order);
                 }
-                // Only Prepared orders show on the Register screen so Cashier can hand them out
                 if (order.status === 'Prepared') {
                     document.getElementById('completedOrdersGrid').innerHTML += buildCard(order);
                 }
             });
 
-            // Sales History
             const salesTable = document.getElementById('salesTableBody');
             salesTable.innerHTML = '';
             [...orders].reverse().forEach(order => {
@@ -601,7 +592,6 @@
             });
         }
 
-        // Initialize App
         renderAll();
         updateCartUI();
     </script>
