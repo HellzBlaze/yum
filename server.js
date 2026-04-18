@@ -1,7 +1,6 @@
 const http = require('http');
 const fs = require('fs');
 
-// The Master Database
 let db = {
     menuItems: [
         { id: 1, name: 'Burger', price: 150, cost: 60 }, 
@@ -16,31 +15,30 @@ let db = {
 };
 
 const server = http.createServer((req, res) => {
-    // CORS headers allow any device to connect
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    // Allow PATCH method for partial data merging
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
     
     if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
 
-    // API: Get Data
     if (req.method === 'GET' && req.url === '/api/data') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(db));
     } 
-    // API: Update Data
-    else if (req.method === 'POST' && req.url === '/api/data') {
+    else if ((req.method === 'POST' || req.method === 'PATCH') && req.url === '/api/data') {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
         req.on('end', () => {
             try {
-                db = JSON.parse(body);
+                const incomingData = JSON.parse(body);
+                // MERGE the new data into the database safely
+                db = { ...db, ...incomingData };
                 res.writeHead(200); res.end('OK');
             } catch (e) {
                 res.writeHead(400); res.end('Invalid JSON');
             }
         });
     } 
-    // Serve index.html
     else if (req.method === 'GET' && (req.url === '/' || req.url === '/index.html')) {
         fs.readFile('./index.html', (err, data) => {
             if (err) { res.writeHead(404); res.end('index.html not found'); return; }
