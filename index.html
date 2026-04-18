@@ -274,21 +274,19 @@
         let orderCounter = 100; let adminPin = '1234'; let managerPin = '5678';
         let currentCashier = 'Unassigned'; let currentCart = []; let activePopupItem = null;
 
-        // Fetch data from server OR local storage
+        // Fetch Data from Server
         async function fetchState() {
             try {
                 let res = await fetch('/api/data');
                 if (res.ok) {
                     let text = await res.text();
                     
-                    // Update LAN Indicator
                     if (!isLANConnected) {
                         isLANConnected = true;
                         document.getElementById('lanDot').classList.remove('lan-offline');
                         document.getElementById('serverStatus').innerHTML = '<span class="lan-indicator"></span>LAN Connected';
                     }
 
-                    // Only process if data changed
                     if (text !== lastDataHash) {
                         lastDataHash = text;
                         let data = JSON.parse(text);
@@ -300,7 +298,6 @@
                         adminPin = data.adminPin || '1234';
                         managerPin = data.managerPin || '5678';
                         
-                        // Prevent interrupting user typing
                         const isTyping = document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
                         const isModalOpen = document.getElementById('itemModal').classList.contains('active') || document.getElementById('assignModal').classList.contains('active');
                         
@@ -308,7 +305,6 @@
                     }
                 }
             } catch (e) {
-                // Server unavailable, fallback to local storage
                 if (isLANConnected) {
                     isLANConnected = false;
                     document.getElementById('lanDot').classList.add('lan-offline');
@@ -318,15 +314,28 @@
             }
         }
 
-        async function pushState() {
-            const payload = { menuItems, globalToppings, employees, orders, orderCounter, adminPin, managerPin };
-            const textStr = JSON.stringify(payload);
-            lastDataHash = textStr;
-            localStorage.setItem('yum_offline_backup', textStr); // Always keep a local copy
-            
+        // --- NEW ISOLATED UPDATE LOGIC ---
+        // We only send the specific piece of data we want to change using PATCH.
+        async function updateServer(partialData) {
+            // 1. Update local variables dynamically
+            if (partialData.menuItems) menuItems = partialData.menuItems;
+            if (partialData.globalToppings) globalToppings = partialData.globalToppings;
+            if (partialData.employees) employees = partialData.employees;
+            if (partialData.orders) orders = partialData.orders;
+            if (partialData.orderCounter) orderCounter = partialData.orderCounter;
+            if (partialData.adminPin) adminPin = partialData.adminPin;
+            if (partialData.managerPin) managerPin = partialData.managerPin;
+
+            // 2. Backup full state locally just in case server goes down
+            const fullState = { menuItems, globalToppings, employees, orders, orderCounter, adminPin, managerPin };
+            localStorage.setItem('yum_offline_backup', JSON.stringify(fullState));
+            lastDataHash = JSON.stringify(fullState); 
+
+            // 3. Push ONLY the changed data to server to prevent data collisions
             try {
-                await fetch('/api/data', { method: 'POST', body: textStr });
+                await fetch('/api/data', { method: 'PATCH', body: JSON.stringify(partialData) });
             } catch (e) { console.log("Saved locally (Offline)"); }
+            
             renderAll();
         }
 
@@ -340,9 +349,8 @@
             } catch(e) {}
         }
 
-        // Start Auto-Sync Polling
-        fetchState();
-        setInterval(fetchState, 3000);
+        // Start Polling
+        fetchState(); setInterval(fetchState, 3000);
 
         // --- NAVIGATION ---
         function switchTab(tabId, btnElement) {
@@ -374,33 +382,40 @@
             const s = document.getElementById('empSector').value;
             document.getElementById('empRole').innerHTML = (map[s]||[]).map(r => `<option value="${r}">${r}</option>`).join('') || '<option value="">Role</option>';
         }
+        
         function addEmployee() {
             const n = document.getElementById('empName').value.trim(), id = document.getElementById('empId').value.trim();
             const s = document.getElementById('empSector').value, r = document.getElementById('empRole').value;
-            if(!n || !id || !s || !r) return alert("Fill all fields"); employees.push({internalId: Date.now(), id, name:n, sector:s, role:r}); pushState();
+            if(!n || !id || !s || !r) return alert("Fill all fields"); employees.push({internalId: Date.now(), id, name:n, sector:s, role:r}); 
+            updateServer({ employees }); // Isolate update
         }
-        function deleteEmployee(id) { if(confirm("Remove?")) { employees = employees.filter(e => e.internalId !== id); pushState(); } }
+        function deleteEmployee(id) { if(confirm("Remove?")) { employees = employees.filter(e => e.internalId !== id); updateServer({ employees }); } }
+        
         function addMenuItem() {
             const n = document.getElementById('newMenuName').value.trim(), p = parseFloat(document.getElementById('newMenuPrice').value), c = parseFloat(document.getElementById('newMenuCost').value)||0;
-            if(!n || isNaN(p)) return; menuItems.push({id: Date.now(), name:n, price:p, cost:c}); pushState();
+            if(!n || isNaN(p)) return; menuItems.push({id: Date.now(), name:n, price:p, cost:c}); 
+            updateServer({ menuItems }); // Isolate update
         }
         function editMenuItem(id) {
             const m = menuItems.find(x => x.id === id);
             const n = prompt("Name:", m.name), p = prompt("Price:", m.price), c = prompt("Cost:", m.cost||0);
-            if(n && !isNaN(parseFloat(p))) { m.name = n; m.price = parseFloat(p); m.cost = parseFloat(c); pushState(); }
+            if(n && !isNaN(parseFloat(p))) { m.name = n; m.price = parseFloat(p); m.cost = parseFloat(c); updateServer({ menuItems }); }
         }
-        function deleteMenuItem(id) { if(confirm("Delete?")) { menuItems = menuItems.filter(m => m.id !== id); pushState(); } }
+        function deleteMenuItem(id) { if(confirm("Delete?")) { menuItems = menuItems.filter(m => m.id !== id); updateServer({ menuItems }); } }
+        
         function addTopping() {
             const n = document.getElementById('newToppingName').value.trim(), p = parseFloat(document.getElementById('newToppingPrice').value);
-            if(!n || isNaN(p)) return; globalToppings.push({id: Date.now(), name:n, price:p}); pushState();
+            if(!n || isNaN(p)) return; globalToppings.push({id: Date.now(), name:n, price:p}); 
+            updateServer({ globalToppings }); 
         }
-        function deleteTopping(id) { if(confirm("Delete?")) { globalToppings = globalToppings.filter(t => t.id !== id); pushState(); } }
+        function deleteTopping(id) { if(confirm("Delete?")) { globalToppings = globalToppings.filter(t => t.id !== id); updateServer({ globalToppings }); } }
+        
         function changePin(t) {
             const o = prompt(`Current ${t} PIN:`), n = prompt(`New ${t} PIN (min 4):`);
-            if (t==='admin' && o===adminPin && n?.length>=4) { adminPin = n; pushState(); alert("Changed"); }
-            if (t==='manager' && (o===managerPin||o===adminPin) && n?.length>=4) { managerPin = n; pushState(); alert("Changed"); }
+            if (t==='admin' && o===adminPin && n?.length>=4) { updateServer({ adminPin: n }); alert("Changed"); }
+            if (t==='manager' && (o===managerPin||o===adminPin) && n?.length>=4) { updateServer({ managerPin: n }); alert("Changed"); }
         }
-        function wipeHistory() { if(prompt("Type DELETE")==="DELETE"){ orders=[]; orderCounter=100; pushState(); alert("Wiped"); } }
+        function wipeHistory() { if(prompt("Type DELETE")==="DELETE"){ updateServer({ orders: [], orderCounter: 100 }); alert("Wiped"); } }
 
         // --- POS ---
         function openModal(id) {
@@ -429,10 +444,16 @@
         function submitOrder() {
             if(!currentCart.length) return;
             const s = currentCart.reduce((sum, i) => sum + i.totalPrice, 0), c = currentCart.reduce((sum, i) => sum + i.totalCost, 0), t = parseFloat(document.getElementById('cartTip').value) || 0;
+            
             orders.push({ id: ++orderCounter, items: [...currentCart], subtotal: s, totalCost: c, tip: t, total: s+t, status: 'Pending', cashier: currentCashier, timestamp: Date.now() });
-            currentCart = []; document.getElementById('cartTip').value = '0'; pushState(); updateCartUI();
+            
+            updateServer({ orders, orderCounter }); // Isolate update
+            currentCart = []; document.getElementById('cartTip').value = '0'; updateCartUI();
         }
-        function updateOrderStatus(id, s) { const o = orders.find(x => x.id === id); if(o){ o.status = s; pushState(); } }
+        function updateOrderStatus(id, s) { 
+            const o = orders.find(x => x.id === id); 
+            if(o){ o.status = s; updateServer({ orders }); } 
+        }
 
         // --- RENDER ---
         function renderAll() {
