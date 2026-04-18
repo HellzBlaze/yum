@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yum - Restaurant OMS</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f9;
+            --primary: #ff6b6b;
+            --text-dark: #2d3436;
+            --card-bg: #ffffff;
+            --border-radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+        }
+
+        /* Navbar & Tabs */
+        header {
+            background-color: var(--primary);
+            padding: 1rem;
+            color: white;
+            text-align: center;
+        }
+
+        nav {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            background: #fff;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            background: #eee;
+            cursor: pointer;
+            border-radius: 20px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Content Area */
+        .tab-content {
+            display: none;
+            padding: 20px;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Forms */
+        .register-form {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            max-width: 400px;
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        input, button {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        button.submit-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Grid & Cards (Based on your image) */
+        .order-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .order-card {
+            background: var(--card-bg);
+            border: 2px solid #2d3436;
+            border-radius: 20px;
+            padding: 15px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: 150px;
+            justify-content: space-between;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .order-no {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .status-badge {
+            border: 2px solid #2d3436;
+            padding: 5px 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .order-details {
+            margin: 15px 0;
+            color: #636e72;
+        }
+
+        .action-btn {
+            align-self: flex-start;
+            background: white;
+            border: 2px solid #2d3436;
+            padding: 5px 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #eee;
+        }
+
+        /* Sales Summary */
+        .sales-summary {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Yum OMS</h1>
+    </header>
+
+    <nav>
+        <button class="tab-btn active" onclick="switchTab('register')">Register</button>
+        <button class="tab-btn" onclick="switchTab('kitchen')">Kitchen</button>
+        <button class="tab-btn" onclick="switchTab('sales')">Sales</button>
+    </nav>
+
+    <main id="register" class="tab-content active">
+        <div class="register-form">
+            <h2>New Order</h2>
+            <input type="text" id="itemName" placeholder="Item Name (e.g. Burger)">
+            <input type="number" id="itemPrice" placeholder="Price (₹)">
+            <button class="submit-btn" onclick="createOrder()">Create Order</button>
+        </div>
+    </main>
+
+    <main id="kitchen" class="tab-content">
+        <h2>Kitchen Queue</h2>
+        <div class="order-grid" id="kitchenGrid"></div>
+    </main>
+
+    <main id="sales" class="tab-content">
+        <div class="sales-summary">Total Sales: ₹<span id="totalSales">0</span></div>
+        <h2>Completed & Ready</h2>
+        <div class="order-grid" id="salesGrid"></div>
+    </main>
+
+    <script>
+        // Data Structure & Storage
+        let orders = JSON.parse(localStorage.getItem('yum_orders')) || [];
+        let orderCounter = parseInt(localStorage.getItem('yum_counter')) || 1000;
+
+        function saveData() {
+            localStorage.setItem('yum_orders', JSON.stringify(orders));
+            localStorage.setItem('yum_counter', orderCounter);
+            renderOrders();
+        }
+
+        // Tab Logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+            renderOrders();
+        }
+
+        // Create Order
+        function createOrder() {
+            const name = document.getElementById('itemName').value;
+            const price = parseFloat(document.getElementById('itemPrice').value);
+
+            if (!name || isNaN(price)) {
+                alert("Please enter valid item details.");
+                return;
+            }
+
+            const newOrder = {
+                id: ++orderCounter,
+                item: name,
+                price: price,
+                status: 'Pending' // Initial state before 'Mark Received'
+            };
+
+            orders.push(newOrder);
+            saveData();
+            
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemPrice').value = '';
+            alert(`Order #${newOrder.id} created!`);
+        }
+
+        // Status Flow Logic
+        const nextStatusMap = {
+            'Pending': { next: 'Received', actionText: 'Mark Received' },
+            'Received': { next: 'Preparing', actionText: 'Mark Preparing' },
+            'Preparing': { next: 'Prepared', actionText: 'Mark Prepared' },
+            'Prepared': { next: 'Collected', actionText: 'Mark Collected' },
+            'Collected': { next: null, actionText: null }
+        };
+
+        function updateStatus(orderId, newStatus) {
+            const orderIndex = orders.findIndex(o => o.id === orderId);
+            if (orderIndex > -1) {
+                orders[orderIndex].status = newStatus;
+                saveData();
+            }
+        }
+
+        // Render UI
+        function renderOrders() {
+            const kitchenGrid = document.getElementById('kitchenGrid');
+            const salesGrid = document.getElementById('salesGrid');
+            
+            kitchenGrid.innerHTML = '';
+            salesGrid.innerHTML = '';
+            let totalRevenue = 0;
+
+            orders.forEach(order => {
+                // Calculate revenue for completed items
+                if (order.status === 'Collected') {
+                    totalRevenue += order.price;
+                }
+
+                // Build Card HTML based on your wireframe layout
+                const flow = nextStatusMap[order.status];
+                
+                let actionButtonHtml = '';
+                if (flow.actionText) {
+                    actionButtonHtml = `<button class="action-btn" onclick="updateStatus(${order.id}, '${flow.next}')">${flow.actionText}</button>`;
+                }
+
+                const cardHtml = `
+                    <div class="order-card">
+                        <div class="card-header">
+                            <span class="order-no">Order #${order.id}</span>
+                            <span class="status-badge">${order.status}</span>
+                        </div>
+                        <div class="order-details">
+                            ${order.item} - ₹${order.price}
+                        </div>
+                        ${actionButtonHtml}
+                    </div>
+                `;
+
+                // Route cards to correct tabs based on status
+                if (['Pending', 'Received', 'Preparing'].includes(order.status)) {
+                    kitchenGrid.innerHTML += cardHtml;
+                } else if (['Prepared', 'Collected'].includes(order.status)) {
+                    salesGrid.innerHTML += cardHtml;
+                }
+            });
+
+            document.getElementById('totalSales').innerText = totalRevenue;
+        }
+
+        // Initialize
+        renderOrders();
+    </script>
+</body>
+</html>
