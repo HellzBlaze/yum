@@ -3,421 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yum Pro - Restaurant OMS</title>
+    <title>Yum Pro OMS</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
-
-        :root {
-            --bg-deep: #0f172a;
-            --bg-surface: #1e293b;
-            --bg-card: #334155;
-            --primary: #6366f1;
-            --primary-glow: rgba(99, 102, 241, 0.4);
-            --accent: #f43f5e;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
-            --border: rgba(255, 255, 255, 0.1);
-            --glass: rgba(15, 23, 42, 0.85);
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; transition: all 0.2s ease-out; }
-
-        body { 
-            background-color: var(--bg-deep); color: var(--text-main); height: 100vh; 
-            display: flex; flex-direction: column; overflow: hidden;
-        }
-
-        header { 
-            background: var(--glass); backdrop-filter: blur(12px); padding: 1rem 2rem; 
-            display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); z-index: 100;
-        }
-
-        h1 { font-weight: 800; font-size: 1.5rem; letter-spacing: -1px; color: var(--primary); text-transform: uppercase; }
-
-        .header-status { 
-            background: var(--bg-surface); padding: 8px 16px; border-radius: 10px; font-size: 0.85rem; 
-            font-weight: 600; cursor: pointer; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px;
-        }
-
-        nav { display: flex; justify-content: center; gap: 8px; padding: 12px; background: var(--bg-deep); border-bottom: 1px solid var(--border); }
-
-        .tab-btn { 
-            padding: 10px 20px; border: 1px solid transparent; background: transparent; cursor: pointer; 
-            border-radius: 8px; font-weight: 600; font-size: 0.9rem; color: var(--text-dim);
-        }
-        .tab-btn:hover { color: var(--text-main); background: var(--bg-surface); }
-        .tab-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 15px var(--primary-glow); }
-
-        .tab-content { display: none; height: calc(100vh - 140px); padding: 24px; overflow-y: auto; }
-        .tab-content.active { display: block; }
-
-        #register-layout { display: grid; grid-template-columns: 380px 1fr; gap: 24px; height: 100%; }
-
-        .panel { 
-            background: var(--bg-surface); border-radius: 16px; border: 1px solid var(--border); 
-            padding: 24px; display: flex; flex-direction: column; overflow: hidden;
-        }
-
-        .right-panel { display: grid; grid-template-rows: 250px 1fr; gap: 20px; }
-
-        .cart-items-container { flex: 1; margin: 16px 0; overflow-y: auto; padding-right: 8px; }
-        .cart-item { padding: 12px; background: var(--bg-card); border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--border); }
-        .cart-item-header { display: flex; justify-content: space-between; font-weight: 600; align-items: center; }
-        .cart-item-remove { 
-            background: rgba(244, 63, 94, 0.2); color: var(--accent); border: none; 
-            border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-weight: bold;
-        }
-
-        .cart-totals { border-top: 1px solid var(--border); padding-top: 16px; }
-        .total-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; }
-        .tip-input { background: var(--bg-deep); border: 1px solid var(--border); color: white; padding: 6px 10px; border-radius: 8px; width: 80px; text-align: right; }
-
-        .submit-btn { 
-            background: var(--primary); color: white; border: none; padding: 18px; border-radius: 14px; 
-            font-weight: 800; font-size: 1.1rem; cursor: pointer; width: 100%; margin-top: 16px; 
-            box-shadow: 0 4px 12px var(--primary-glow);
-        }
-        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px var(--primary-glow); }
-
-        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
-        .menu-btn { 
-            background: var(--bg-card); border: 1px solid var(--border); padding: 20px 12px; 
-            border-radius: 16px; cursor: pointer; text-align: center; display: flex; flex-direction: column; justify-content: center;
-        }
-        .menu-btn:hover { border-color: var(--primary); background: var(--bg-surface); transform: translateY(-3px); }
-        .menu-btn .price { color: var(--text-dim); font-size: 0.85rem; font-weight: 600; margin-top: 8px; }
-
-        .order-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-        .order-card { background: var(--bg-surface); border-radius: 18px; border: 1px solid var(--border); padding: 20px; border-left: 6px solid var(--primary); position: relative; }
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-        .status-pill { 
-            font-size: 0.75rem; text-transform: uppercase; padding: 4px 10px; border-radius: 8px; 
-            font-weight: 800; background: var(--bg-card); border: 1px solid var(--border);
-        }
-        .order-item-row { padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
-        .card-actions { display: flex; gap: 8px; margin-top: 20px; }
-        .btn-status { flex: 2; background: var(--primary); border: none; padding: 12px; border-radius: 10px; color: white; font-weight: 700; cursor: pointer;}
-        .btn-cancel { flex: 1; background: transparent; border: 1.5px solid var(--accent); color: var(--accent); padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer;}
-
-        .modal-overlay { 
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); 
-            backdrop-filter: blur(10px); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 20px;
-        }
-        .modal-overlay.active { display: flex; }
-        .modal-content { background: var(--bg-surface); border-radius: 24px; border: 1px solid var(--border); width: 100%; max-width: 750px; display: flex; flex-direction: row; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        .modal-main { padding: 32px; flex: 1.5; }
-        .modal-sidebar { background: rgba(0,0,0,0.2); padding: 32px; width: 300px; border-left: 1px solid var(--border); }
-        .modal-mini { max-width: 450px; flex-direction: column; }
-
-        .stat-card { background: var(--bg-surface); padding: 24px; border-radius: 20px; border: 1px solid var(--border); }
-        .val { font-size: 2.2rem; font-weight: 800; color: var(--primary); }
-        .label { color: var(--text-dim); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 8px;}
-
-        table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
-        th { text-align: left; padding: 12px; color: var(--text-dim); text-transform: uppercase; font-size: 0.75rem; }
-        td { background: var(--bg-card); padding: 16px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-        td:first-child { border-left: 1px solid var(--border); border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
-        td:last-child { border-right: 1px solid var(--border); border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
-
-        .lan-indicator { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-        .online { background: var(--success); box-shadow: 0 0 10px var(--success); }
-        .offline { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
-
-        textarea { width: 100%; background: var(--bg-deep); border: 1px solid var(--border); border-radius: 12px; color: white; padding: 12px; resize: none; margin-top: 10px; }
-        .qty-controls { display: flex; align-items: center; gap: 20px; background: var(--bg-deep); padding: 10px 20px; border-radius: 12px; width: fit-content; }
-        .qty-btn { background: var(--bg-card); border: 1px solid var(--border); color: white; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.2rem; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; color: #333; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; max-width: 500px; }
+        h1 { color: #2c3e50; }
+        .btn { padding: 12px 20px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
+        .btn:hover { background: #219150; }
+        input, select { padding: 10px; margin: 10px 0; display: block; width: 95%; border: 1px solid #ddd; border-radius: 6px; }
+        ul { list-style: none; padding: 0; }
+        li { background: #eee; margin: 5px 0; padding: 10px; border-radius: 4px; border-left: 5px solid #27ae60; }
     </style>
 </head>
 <body>
 
-    <header>
-        <div style="width: 250px;"><span class="header-status" id="serverStatus"><span class="lan-indicator offline" id="lanDot"></span>Connecting...</span></div>
-        <h1>YUM PRO</h1>
-        <div style="width: 250px; text-align: right;"><span class="header-status" id="headerCashierLabel" onclick="promptRegisterUnlock()">Unassigned Cashier ✎</span></div>
-    </header>
+    <h1>🍔 Yum Pro OMS</h1>
 
-    <nav>
-        <button class="tab-btn active" onclick="switchTab('register', this)">Register</button>
-        <button class="tab-btn" onclick="switchTab('kitchen', this)">Kitchen</button>
-        <button class="tab-btn" onclick="switchTab('sales', this)">Analytics</button>
-        <button class="tab-btn" onclick="switchTab('menu', this)">Menu Setup</button>
-        <button class="tab-btn" onclick="switchTab('settings', this)">Settings</button>
-    </nav>
+    <div class="card">
+        <h3>Register New Staff</h3>
+        <input type="text" id="empName" placeholder="Full Name">
+        <input type="text" id="empId" placeholder="Staff ID (e.g. 101)">
+        <select id="empSector">
+            <option value="Front">Front of House</option>
+            <option value="Kitchen">Kitchen</option>
+        </select>
+        <select id="empRole">
+            <option value="Waiter">Waiter</option>
+            <option value="Chef">Chef</option>
+            <option value="Manager">Manager</option>
+        </select>
+        <button class="btn" onclick="addEmployee()">Add Employee</button>
+    </div>
 
-    <main id="register" class="tab-content active">
-        <div id="register-layout">
-            <div class="panel">
-                <div style="display: flex; justify-content: space-between; align-items: center;"><h3 style="font-weight: 800;">ACTIVE ORDER</h3><button onclick="lockRegister()" style="background:none; border:none; color:var(--accent); cursor:pointer; font-weight:600; font-size:0.8rem;">LOGOUT</button></div>
-                <div class="cart-items-container" id="cartItemsList"></div>
-                <div class="cart-totals">
-                    <div class="total-row"><span>Subtotal</span><span>₹<span id="cartSubtotal">0</span></span></div>
-                    <div class="total-row" style="color:var(--text-dim); font-size:0.9rem;"><span>Tip</span><input type="number" id="cartTip" class="tip-input" value="0" oninput="updateCartUI()"></div>
-                    <div class="total-row" style="font-size: 1.6rem; font-weight: 800; margin-top: 12px; color:var(--primary);"><span>Total</span><span>₹<span id="cartTotal">0</span></span></div>
-                </div>
-                <button class="submit-btn" onclick="submitOrder()">SUBMIT ORDER</button>
-            </div>
-            <div class="right-panel">
-                <div class="panel"><h3>Ready for Pickup</h3><div class="order-grid" id="completedOrdersGrid"></div></div>
-                <div class="panel"><h3>Menu Items</h3><div class="menu-grid" id="posMenuGrid"></div></div>
-            </div>
-        </div>
-    </main>
-
-    <main id="kitchen" class="tab-content"><h2 style="margin-bottom: 24px; font-weight: 800;">KITCHEN QUEUE</h2><div class="order-grid" id="kitchenGrid"></div></main>
-
-    <main id="sales" class="tab-content">
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 30px;">
-            <div class="stat-card"><div class="label">Revenue</div><div class="val">₹<span id="statTotalRevenue">0</span></div></div>
-            <div class="stat-card"><div class="label">Net Profit</div><div class="val">₹<span id="statTotalProfit">0</span></div></div>
-            <div class="stat-card"><div class="label">Total Tips</div><div class="val">₹<span id="statTotalTips">0</span></div></div>
-            <div class="stat-card"><div class="label">Orders</div><div class="val" id="statTotalOrders">0</div></div>
-        </div>
-        <div class="panel"><h3>Item Performance</h3><table><thead><tr><th>Item</th><th>Sold</th><th>Revenue</th><th>Profit</th></tr></thead><tbody id="analyticsTableBody"></tbody></table></div>
-        <h2 style="margin: 40px 0 20px 0;">Order History</h2>
-        <table><thead><tr><th>Order</th><th>Items</th><th>Total</th><th>Cashier</th><th>Status</th></tr></thead><tbody id="salesTableBody"></tbody></table>
-    </main>
-
-    <main id="menu" class="tab-content">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-            <div class="panel">
-                <h3>Menu Items</h3>
-                <div style="display: flex; gap:10px; margin: 20px 0;">
-                    <input type="text" id="newMenuName" placeholder="Name" style="background:var(--bg-deep); border:1px solid var(--border); color:white; padding:10px; border-radius:8px; flex:2;">
-                    <input type="number" id="newMenuPrice" placeholder="Price" style="background:var(--bg-deep); border:1px solid var(--border); color:white; padding:10px; border-radius:8px; flex:1;">
-                    <input type="number" id="newMenuCost" placeholder="Cost" style="background:var(--bg-deep); border:1px solid var(--border); color:white; padding:10px; border-radius:8px; flex:1;">
-                    <button class="submit-btn" style="margin:0; padding:10px; width:auto;" onclick="addMenuItem()">ADD</button>
-                </div>
-                <table><thead><tr><th>Name</th><th>Price</th><th>Cost</th><th>Action</th></tr></thead><tbody id="menuAdminBody"></tbody></table>
-            </div>
-            <div class="panel">
-                <h3>Toppings</h3>
-                <div style="display: flex; gap:10px; margin: 20px 0;">
-                    <input type="text" id="newToppingName" placeholder="Name" style="background:var(--bg-deep); border:1px solid var(--border); color:white; padding:10px; border-radius:8px; flex:2;">
-                    <input type="number" id="newToppingPrice" placeholder="Price" style="background:var(--bg-deep); border:1px solid var(--border); color:white; padding:10px; border-radius:8px; flex:1;">
-                    <button class="submit-btn" style="margin:0; padding:10px; width:auto;" onclick="addTopping()">ADD</button>
-                </div>
-                <table><thead><tr><th>Name</th><th>Extra</th><th>Action</th></tr></thead><tbody id="toppingsAdminBody"></tbody></table>
-            </div>
-        </div>
-    </main>
-
-    <main id="settings" class="tab-content">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-            <div class="panel">
-                <h3>Manage Staff</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap:10px; margin: 20px 0;">
-                    <input type="text" id="empName" placeholder="Name" style="background:var(--bg-deep); border:1px solid var(--border); color:white; padding:10px; border-radius:8px;">
-                    <input type="text" id="empId" placeholder="ID" style="background:var(--bg-deep); border:1px solid var(--border); color:white; padding:10px; border-radius:8px;">
-                    <select id="empSector" onchange="updateRoleOptions()" style="background:var(--bg-deep); color:white; border:1px solid var(--border); padding:10px; border-radius:8px;">
-                        <option value="">Sector</option><option value="Register">Register</option><option value="Kitchen">Kitchen</option><option value="Administration">Administration</option><option value="Store">Store</option><option value="All Round">All Round</option>
-                    </select>
-                    <select id="empRole" style="background:var(--bg-deep); color:white; border:1px solid var(--border); padding:10px; border-radius:8px;"><option value="">Role</option></select>
-                </div>
-                <button class="submit-btn" style="margin:0; width:100%;" onclick="addEmployee()">ADD STAFF</button>
-                <table style="margin-top:20px;"><thead><tr><th>ID</th><th>Name</th><th>Role</th><th>Action</th></tr></thead><tbody id="employeeTableBody"></tbody></table>
-            </div>
-            <div class="panel">
-                <h3>System Security</h3>
-                <div style="display: flex; flex-direction: column; gap:15px; margin-top:20px;">
-                    <button class="btn-cancel" style="border-color:var(--primary); color:var(--primary); padding:15px;" onclick="changePin('admin')">CHANGE MASTER ADMIN PIN</button>
-                    <button class="btn-cancel" style="border-color:var(--primary); color:var(--primary); padding:15px;" onclick="changePin('manager')">CHANGE MANAGER PIN</button>
-                    <button class="submit-btn" style="background:var(--accent); margin-top:40px;" onclick="wipeHistory()">WIPE ALL DATA</button>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <div class="modal-overlay" id="modalContainer"></div>
+    <div class="card">
+        <h3>Active Staff Members</h3>
+        <ul id="staffList"></ul>
+    </div>
 
     <script>
-        let isLANConnected = false; let lastDataHash = "";
-        let menuItems = []; let globalToppings = []; let employees = []; let orders = [];
-        let orderCounter = 100; let adminPin = '1234'; let managerPin = '5678';
-        let currentCashier = 'Unassigned'; let currentCart = []; let activePopupItem = null;
+        let employees = [];
 
-        // --- FULL ROLE MAPPING RESTORED ---
-        const roleMappings = {
-            'Register': ['Intern', 'Junior', 'Senior', 'Sector Chief', 'Shareholder', 'Owner'],
-            'Kitchen': ['Intern', 'Junior', 'Senior', 'Sector Chief', 'Shareholder', 'Owner'],
-            'Administration': ['Manager', 'Junior Administrator', 'Senior Administrator', 'Director', 'Shareholder', 'Owner'],
-            'Store': ['Shareholder', 'Owner'],
-            'All Round': ['Shareholder', 'Owner']
-        };
-
-        async function fetchState() {
+        // LOAD DATA FROM REPLIT SERVER
+        async function loadData() {
             try {
-                let res = await fetch('/api/data');
-                if (res.ok) {
-                    let text = await res.text();
-                    if (!isLANConnected) {
-                        isLANConnected = true;
-                        document.getElementById('lanDot').className = 'lan-indicator online';
-                        document.getElementById('serverStatus').innerHTML = '<span class="lan-indicator online"></span>LAN Online';
-                    }
-                    if (text !== lastDataHash) {
-                        lastDataHash = text;
-                        let data = JSON.parse(text);
-                        menuItems = data.menuItems || []; globalToppings = data.globalToppings || [];
-                        employees = data.employees || []; orders = data.orders || [];
-                        orderCounter = data.orderCounter || 100; adminPin = data.adminPin || '1234';
-                        managerPin = data.managerPin || '5678';
-                        if (!(document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName))) renderAll();
-                    }
-                }
-            } catch (e) {
-                if (isLANConnected) {
-                    isLANConnected = false;
-                    document.getElementById('lanDot').className = 'lan-indicator offline';
-                    document.getElementById('serverStatus').innerHTML = '<span class="lan-indicator offline"></span>Offline Mode';
-                }
-                loadFromLocal();
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                employees = data.employees || [];
+                renderStaff();
+            } catch (err) {
+                console.error("Connection Failed:", err);
             }
         }
 
-        async function updateServer(partialData) {
-            Object.assign(window, partialData); 
-            const fullState = { menuItems, globalToppings, employees, orders, orderCounter, adminPin, managerPin };
-            localStorage.setItem('yum_offline_backup', JSON.stringify(fullState));
-            lastDataHash = JSON.stringify(fullState); 
-            try { await fetch('/api/data', { method: 'PATCH', body: JSON.stringify(partialData) }); } catch (e) {}
-            renderAll();
-        }
-
-        function loadFromLocal() {
-            let data = JSON.parse(localStorage.getItem('yum_offline_backup') || '{}');
-            menuItems = data.menuItems || [{ id: 1, name: 'Burger', price: 150, cost: 60 }];
-            globalToppings = data.globalToppings || [{ id: 1, name: 'Extra Cheese', price: 20 }];
-            employees = data.employees || []; orders = data.orders || []; orderCounter = data.orderCounter || 100;
-            adminPin = data.adminPin || '1234'; managerPin = data.managerPin || '5678';
-            renderAll();
-        }
-
-        fetchState(); setInterval(fetchState, 3000);
-
-        function openModal(contentHtml) {
-            const container = document.getElementById('modalContainer');
-            container.innerHTML = contentHtml;
-            container.classList.add('active');
-        }
-
-        function closeModal() {
-            const container = document.getElementById('modalContainer');
-            container.classList.remove('active');
-            container.innerHTML = '';
-            activePopupItem = null;
-        }
-
-        function switchTab(tabId, btn) {
-            if (['settings', 'menu'].includes(tabId)) {
-                if (prompt(`Enter Master Admin PIN:`) !== adminPin) return alert("Access Denied");
-            }
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            btn.classList.add('active');
-        }
-
-        function promptRegisterUnlock() {
-            const pin = prompt("Enter Manager/Admin PIN:");
-            if (pin !== managerPin && pin !== adminPin) return alert("Denied");
-            const eligible = employees.filter(e => ['Register', 'All Round', 'Administration'].includes(e.sector));
-            const options = eligible.map(e => `<option value="${e.name}">${e.name} (${e.role})</option>`).join('');
-            openModal(`<div class="modal-content modal-mini"><h2>Assign Staff</h2><select id="cashierSelect" style="width:100%; background:var(--bg-deep); color:white; border:1px solid var(--border); padding:12px; border-radius:10px; margin:20px 0;">${options}</select><button class="submit-btn" style="margin:0;" onclick="confirmCashier()">SET CASHIER</button><button class="btn-cancel" style="width:100%; margin-top:10px;" onclick="closeModal()">CANCEL</button></div>`);
-        }
-
-        function confirmCashier() { currentCashier = document.getElementById('cashierSelect').value; document.getElementById('headerCashierLabel').innerText = currentCashier + " ✎"; closeModal(); }
-        function lockRegister() { currentCashier = 'Unassigned'; document.getElementById('headerCashierLabel').innerText = "Unassigned Cashier ✎"; }
-
-        function updateRoleOptions() {
-            const sector = document.getElementById('empSector').value;
-            const roleSelect = document.getElementById('empRole');
-            roleSelect.innerHTML = '<option value="">Role</option>';
-            if (sector && roleMappings[sector]) {
-                roleMappings[sector].forEach(role => {
-                    roleSelect.innerHTML += `<option value="${role}">${role}</option>`;
-                });
-            }
+        // SAVE DATA TO REPLIT SERVER
+        async function updateServer(payload) {
+            await fetch('/api/data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
         }
 
         function addEmployee() {
-            const n = document.getElementById('empName').value, id = document.getElementById('empId').value, s = document.getElementById('empSector').value, r = document.getElementById('empRole').value;
-            if(n && id && s && r) { employees.push({internalId: Date.now(), id, name:n, sector:s, role:r}); updateServer({ employees }); }
-        }
+            const n = document.getElementById('empName').value;
+            const id = document.getElementById('empId').value;
+            const s = document.getElementById('empSector').value;
+            const r = document.getElementById('empRole').value;
 
-        function addMenuItem() {
-            const n = document.getElementById('newMenuName').value, p = parseFloat(document.getElementById('newMenuPrice').value), c = parseFloat(document.getElementById('newMenuCost').value)||0;
-            if(n && p) { menuItems.push({id: Date.now(), name:n, price:p, cost:c}); updateServer({ menuItems }); }
-        }
-
-        function addTopping() {
-            const n = document.getElementById('newToppingName').value, p = parseFloat(document.getElementById('newToppingPrice').value);
-            if(n && !isNaN(p)) { globalToppings.push({id: Date.now(), name:n, price:p}); updateServer({ globalToppings }); }
-        }
-
-        function openItemPopup(id) {
-            activePopupItem = menuItems.find(m => m.id === id);
-            const tops = globalToppings.map(t => `<label style="display:flex; align-items:center; gap:10px; margin-bottom:10px;"><input type="checkbox" value="${t.name}" data-price="${t.price}"> ${t.name} (+₹${t.price})</label>`).join('');
-            openModal(`<div class="modal-content"><div class="modal-main"><h2 style="color:var(--primary); margin-bottom:10px;">${activePopupItem.name}</h2><div style="display:flex; justify-content:space-between; align-items:center; margin: 20px 0;"><span style="font-weight: 800;">Quantity</span><div class="qty-controls"><button class="qty-btn" onclick="changeQty(-1)">−</button><span id="modalQty" style="font-weight:800; font-size:1.2rem;">1</span><button class="qty-btn" onclick="changeQty(1)">+</button></div></div><textarea id="modalNote" placeholder="Kitchen Notes..."></textarea></div><div class="modal-sidebar"><h3>Toppings</h3><div style="max-height: 250px; overflow-y:auto;">${tops}</div><div style="margin-top: auto; display:flex; flex-direction:column; gap:10px;"><button class="submit-btn" style="margin:0;" onclick="confirmItem()">CONFIRM ITEM</button><button class="btn-cancel" onclick="closeModal()">CANCEL</button></div></div></div>`);
-        }
-
-        function changeQty(d) { let c = parseInt(document.getElementById('modalQty').innerText); if(c+d>=1) document.getElementById('modalQty').innerText = c+d; }
-
-        function confirmItem() {
-            const q = parseInt(document.getElementById('modalQty').innerText), n = document.getElementById('modalNote').value, tops = []; let tp = 0;
-            document.querySelectorAll('.modal-sidebar input:checked').forEach(c => { tops.push(c.value); tp += parseFloat(c.dataset.price); });
-            currentCart.push({ id: Date.now(), menuId: activePopupItem.id, name: activePopupItem.name, qty:q, totalPrice:(activePopupItem.price+tp)*q, totalCost:(activePopupItem.cost||0)*q, note:n, toppings:tops });
-            closeModal(); updateCartUI();
-        }
-
-        function removeFromCart(id) { currentCart = currentCart.filter(i => i.id !== id); updateCartUI(); }
-
-        function updateCartUI() {
-            let s = 0; document.getElementById('cartItemsList').innerHTML = currentCart.map(i => { s += i.totalPrice; return `<div class="cart-item"><div class="cart-item-header"><span><b>${i.qty}x</b> ${i.name}</span><div>₹${i.totalPrice} <button class="cart-item-remove" onclick="removeFromCart(${i.id})">×</button></div></div></div>`; }).join('');
-            const t = parseFloat(document.getElementById('cartTip').value) || 0;
-            document.getElementById('cartSubtotal').innerText = s; document.getElementById('cartTotal').innerText = s + t;
-        }
-
-        function submitOrder() {
-            if(!currentCart.length) return;
-            const s = currentCart.reduce((a,b)=>a+b.totalPrice,0), c = currentCart.reduce((a,b)=>a+b.totalCost,0), t = parseFloat(document.getElementById('cartTip').value)||0;
-            orders.push({ id: ++orderCounter, items: [...currentCart], subtotal: s, totalCost: c, tip: t, total: s+t, status: 'Pending', cashier: currentCashier, timestamp: Date.now() });
-            currentCart = []; document.getElementById('cartTip').value = '0'; updateServer({ orders, orderCounter }); updateCartUI();
-        }
-
-        function updateOrderStatus(id, s) { const o = orders.find(x => x.id === id); if(o){ o.status = s; updateServer({ orders }); } }
-
-        function changePin(type) {
-            const old = prompt("Current Admin PIN:"), nw = prompt("New PIN (min 4):");
-            if(old === adminPin && nw?.length >= 4) { let p = {}; p[type+'Pin'] = nw; updateServer(p); alert("Success"); }
-        }
-
-        function wipeHistory() { if(prompt("Type DELETE") === "DELETE") updateServer({ orders: [], orderCounter: 100 }); }
-
-        function renderAll() {
-            document.getElementById('menuAdminBody').innerHTML = menuItems.map(m => `<tr><td>${m.name}</td><td>₹${m.price}</td><td>₹${m.cost}</td><td><button class="btn-cancel" style="padding:4px 8px;" onclick="updateServer({menuItems:menuItems.filter(x=>x.id!==${m.id})})">Del</button></td></tr>`).join('');
-            document.getElementById('toppingsAdminBody').innerHTML = globalToppings.map(t => `<tr><td>${t.name}</td><td>₹${t.price}</td><td><button class="btn-cancel" style="padding:4px 8px;" onclick="updateServer({globalToppings:globalToppings.filter(x=>x.id!==${t.id})})">Del</button></td></tr>`).join('');
-            document.getElementById('employeeTableBody').innerHTML = employees.map(e => `<tr><td>${e.id}</td><td>${e.name}</td><td>${e.role}</td><td><button class="btn-cancel" style="padding:4px 8px;" onclick="updateServer({employees:employees.filter(x=>x.internalId!==${e.internalId})})">Del</button></td></tr>`).join('');
-            document.getElementById('posMenuGrid').innerHTML = menuItems.map(m => `<div class="menu-btn" onclick="openItemPopup(${m.id})">${m.name}<span class="price">₹${m.price}</span></div>`).join('');
-            document.getElementById('kitchenGrid').innerHTML = ''; document.getElementById('completedOrdersGrid').innerHTML = '';
-            let tRev = 0, tTips = 0, tOrd = 0, tProf = 0, iAnly = {};
-            orders.forEach(o => {
-                const conf = {'Pending':{n:'Received',b:'Accept',c:'var(--warning)'}, 'Received':{n:'Preparing',b:'Start',c:'var(--primary)'}, 'Preparing':{n:'Prepared',b:'Ready',c:'var(--primary)'}, 'Prepared':{n:'Collected',b:'Finish',c:'var(--success)'}}[o.status];
-                if(conf) {
-                    const html = `<div class="order-card" style="border-left-color:${conf.c}"><div class="card-header"><span class="order-no">#${o.id}</span><span class="status-pill" style="color:${conf.c}">${o.status}</span></div><div class="order-items-list">${o.items.map(i=>`<div class="order-item-row"><b>${i.qty}x ${i.name}</b>${i.note?`<br><small style="color:var(--accent)">"${i.note}"</small>`:''}</div>`).join('')}</div><div class="card-actions">${conf.n?`<button class="btn-status" onclick="updateOrderStatus(${o.id}, '${conf.n}')">${conf.b}</button>`:''}<button class="btn-cancel" onclick="updateOrderStatus(${o.id}, 'Cancelled')">Cancel</button></div></div>`;
-                    if(['Pending','Received','Preparing'].includes(o.status)) document.getElementById('kitchenGrid').innerHTML += html;
-                    else if(o.status === 'Prepared') document.getElementById('completedOrdersGrid').innerHTML += html;
+            if (n && id && s && r) {
+                // --- DUPLICATE ID CHECK ---
+                const isDuplicate = employees.some(emp => emp.id === id);
+                
+                if (isDuplicate) {
+                    alert(`🚨 ERROR: Staff ID "${id}" is already assigned to another employee!`);
+                    return; 
                 }
-                if(o.status === 'Collected') {
-                    tRev += o.subtotal; tTips += o.tip; tOrd++; tProf += (o.subtotal - o.totalCost);
-                    o.items.forEach(i => { if(!iAnly[i.name]) iAnly[i.name]={q:0,r:0,p:0}; iAnly[i.name].q+=i.qty; iAnly[i.name].r+=i.totalPrice; iAnly[i.name].p+=(i.totalPrice-i.totalCost); });
-                }
-            });
-            document.getElementById('statTotalRevenue').innerText = tRev; document.getElementById('statTotalProfit').innerText = tProf; document.getElementById('statTotalTips').innerText = tTips; document.getElementById('statTotalOrders').innerText = tOrd;
-            document.getElementById('analyticsTableBody').innerHTML = Object.entries(iAnly).map(([n,d])=>`<tr><td><b>${n}</b></td><td>${d.q}</td><td>₹${d.r}</td><td style="color:var(--success)">₹${d.p}</td></tr>`).join('');
-            document.getElementById('salesTableBody').innerHTML = [...orders].reverse().map(o => `<tr><td>#${o.id}</td><td>${o.items.length} items</td><td>₹${o.total}</td><td>${o.cashier}</td><td>${o.status}</td></tr>`).join('');
+
+                // Add to local array
+                employees.push({ id: id, name: n, sector: s, role: r });
+                
+                // Sync with server
+                updateServer({ employees });
+                
+                // Refresh list and clear inputs
+                renderStaff();
+                document.getElementById('empName').value = '';
+                document.getElementById('empId').value = '';
+            } else {
+                alert("Please complete all fields.");
+            }
         }
+
+        function renderStaff() {
+            const list = document.getElementById('staffList');
+            list.innerHTML = employees.map(emp => 
+                `<li><strong>ID: ${emp.id}</strong> — ${emp.name} (${emp.role})</li>`
+            ).join('');
+        }
+
+        // Run on startup
+        loadData();
     </script>
 </body>
 </html>
