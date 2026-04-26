@@ -133,7 +133,7 @@
 <body>
 
     <header>
-        <div style="width: 250px;"><span class="header-status" id="serverStatus"><span class="lan-indicator offline" id="lanDot"></span>Connecting...</span></div>
+        <div style="width: 250px;"><span class="header-status" id="serverStatus"><span class="lan-indicator online" id="lanDot"></span>Standalone Mode</span></div>
         <h1>YUM PRO</h1>
         <div style="width: 250px; text-align: right;"><span class="header-status" id="headerCashierLabel" onclick="promptRegisterUnlock()">Unassigned Cashier ✎</span></div>
     </header>
@@ -232,12 +232,32 @@
     <div class="modal-overlay" id="modalContainer"></div>
 
     <script>
-        // CONFIG: Replace with your actual tablet IP!
-        const API_BASE = "http://localhost:3000"; 
+        // --- DATA STATE MANAGER (STANDALONE) ---
+        let state = JSON.parse(localStorage.getItem('yum_pro_storage')) || {
+            menuItems: [{ id: 1, name: 'Burger', price: 150, cost: 60 }],
+            globalToppings: [{ id: 1, name: 'Extra Cheese', price: 20 }],
+            employees: [],
+            orders: [],
+            orderCounter: 100,
+            adminPin: '1234',
+            managerPin: '5678'
+        };
 
-        let isLANConnected = false; let lastDataHash = "";
-        let menuItems = []; let globalToppings = []; let employees = []; let orders = [];
-        let orderCounter = 100; let adminPin = '1234'; let managerPin = '5678';
+        function saveState() {
+            localStorage.setItem('yum_pro_storage', JSON.stringify(state));
+            renderAll();
+        }
+
+        // Mapping local variables to state for compatibility
+        let menuItems, globalToppings, employees, orders, orderCounter, adminPin, managerPin;
+        function syncVariables() {
+            menuItems = state.menuItems; globalToppings = state.globalToppings;
+            employees = state.employees; orders = state.orders;
+            orderCounter = state.orderCounter; adminPin = state.adminPin;
+            managerPin = state.managerPin;
+        }
+        syncVariables();
+
         let currentCashier = 'Unassigned'; let currentCart = []; let activePopupItem = null;
 
         const roleMappings = {
@@ -247,56 +267,6 @@
             'Store': ['Shareholder', 'Owner'],
             'All Round': ['Shareholder', 'Owner']
         };
-
-        async function fetchState() {
-            try {
-                let res = await fetch(`${API_BASE}/api/data`);
-                if (res.ok) {
-                    let text = await res.text();
-                    if (!isLANConnected) {
-                        isLANConnected = true;
-                        document.getElementById('lanDot').className = 'lan-indicator online';
-                        document.getElementById('serverStatus').innerHTML = '<span class="lan-indicator online"></span>LAN Online';
-                    }
-                    if (text !== lastDataHash) {
-                        lastDataHash = text;
-                        let data = JSON.parse(text);
-                        menuItems = data.menuItems || []; globalToppings = data.globalToppings || [];
-                        employees = data.employees || []; orders = data.orders || [];
-                        orderCounter = data.orderCounter || 100; adminPin = data.adminPin || '1234';
-                        managerPin = data.managerPin || '5678';
-                        if (!(document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName))) renderAll();
-                    }
-                }
-            } catch (e) {
-                if (isLANConnected) {
-                    isLANConnected = false;
-                    document.getElementById('lanDot').className = 'lan-indicator offline';
-                    document.getElementById('serverStatus').innerHTML = '<span class="lan-indicator offline"></span>Connecting...';
-                }
-                loadFromLocal();
-            }
-        }
-
-        async function updateServer(partialData) {
-            Object.assign(window, partialData); 
-            const fullState = { menuItems, globalToppings, employees, orders, orderCounter, adminPin, managerPin };
-            localStorage.setItem('yum_offline_backup', JSON.stringify(fullState));
-            lastDataHash = JSON.stringify(fullState); 
-            try { await fetch(`${API_BASE}/api/data`, { method: 'PATCH', body: JSON.stringify(partialData) }); } catch (e) {}
-            renderAll();
-        }
-
-        function loadFromLocal() {
-            let data = JSON.parse(localStorage.getItem('yum_offline_backup') || '{}');
-            menuItems = data.menuItems || [{ id: 1, name: 'Burger', price: 150, cost: 60 }];
-            globalToppings = data.globalToppings || [{ id: 1, name: 'Extra Cheese', price: 20 }];
-            employees = data.employees || []; orders = data.orders || []; orderCounter = data.orderCounter || 100;
-            adminPin = data.adminPin || '1234'; managerPin = data.managerPin || '5678';
-            renderAll();
-        }
-
-        fetchState(); setInterval(fetchState, 3000);
 
         function openModal(contentHtml) {
             const container = document.getElementById('modalContainer');
@@ -343,30 +313,28 @@
             }
         }
 
-        // DUPLICATE ID CHECK FOR STAFF
         function addEmployee() {
             const n = document.getElementById('empName').value, id = document.getElementById('empId').value, s = document.getElementById('empSector').value, r = document.getElementById('empRole').value;
             if(n && id && s && r) {
-                const isDuplicate = employees.some(emp => emp.id === id);
-                if (isDuplicate) {
-                    alert(`🚨 ERROR: Staff ID "${id}" is already assigned!`);
+                // DUPLICATE ID CHECK
+                if (state.employees.some(emp => emp.id === id)) {
+                    alert(`🚨 ID "${id}" is already used!`);
                     return;
                 }
-                employees.push({internalId: Date.now(), id, name:n, sector:s, role:r}); 
-                updateServer({ employees }); 
-                document.getElementById('empName').value = '';
-                document.getElementById('empId').value = '';
+                state.employees.push({internalId: Date.now(), id, name:n, sector:s, role:r}); 
+                syncVariables(); saveState();
+                document.getElementById('empName').value = ''; document.getElementById('empId').value = '';
             }
         }
 
         function addMenuItem() {
             const n = document.getElementById('newMenuName').value, p = parseFloat(document.getElementById('newMenuPrice').value), c = parseFloat(document.getElementById('newMenuCost').value)||0;
-            if(n && p) { menuItems.push({id: Date.now(), name:n, price:p, cost:c}); updateServer({ menuItems }); }
+            if(n && p) { state.menuItems.push({id: Date.now(), name:n, price:p, cost:c}); syncVariables(); saveState(); }
         }
 
         function addTopping() {
             const n = document.getElementById('newToppingName').value, p = parseFloat(document.getElementById('newToppingPrice').value);
-            if(n && !isNaN(p)) { globalToppings.push({id: Date.now(), name:n, price:p}); updateServer({ globalToppings }); }
+            if(n && !isNaN(p)) { state.globalToppings.push({id: Date.now(), name:n, price:p}); syncVariables(); saveState(); }
         }
 
         function openItemPopup(id) {
@@ -395,23 +363,23 @@
         function submitOrder() {
             if(!currentCart.length) return;
             const s = currentCart.reduce((a,b)=>a+b.totalPrice,0), c = currentCart.reduce((a,b)=>a+b.totalCost,0), t = parseFloat(document.getElementById('cartTip').value)||0;
-            orders.push({ id: ++orderCounter, items: [...currentCart], subtotal: s, totalCost: c, tip: t, total: s+t, status: 'Pending', cashier: currentCashier, timestamp: Date.now() });
-            currentCart = []; document.getElementById('cartTip').value = '0'; updateServer({ orders, orderCounter }); updateCartUI();
+            state.orders.push({ id: ++state.orderCounter, items: [...currentCart], subtotal: s, totalCost: c, tip: t, total: s+t, status: 'Pending', cashier: currentCashier, timestamp: Date.now() });
+            currentCart = []; document.getElementById('cartTip').value = '0'; syncVariables(); saveState(); updateCartUI();
         }
 
-        function updateOrderStatus(id, s) { const o = orders.find(x => x.id === id); if(o){ o.status = s; updateServer({ orders }); } }
+        function updateOrderStatus(id, s) { const o = state.orders.find(x => x.id === id); if(o){ o.status = s; saveState(); } }
 
         function changePin(type) {
             const old = prompt("Current Admin PIN:"), nw = prompt("New PIN (min 4):");
-            if(old === adminPin && nw?.length >= 4) { let p = {}; p[type+'Pin'] = nw; updateServer(p); alert("Success"); }
+            if(old === adminPin && nw?.length >= 4) { state[type+'Pin'] = nw; syncVariables(); saveState(); alert("Success"); }
         }
 
-        function wipeHistory() { if(prompt("Type DELETE") === "DELETE") updateServer({ orders: [], orderCounter: 100 }); }
+        function wipeHistory() { if(prompt("Type DELETE") === "DELETE") { state.orders = []; state.orderCounter = 100; saveState(); } }
 
         function renderAll() {
-            document.getElementById('menuAdminBody').innerHTML = menuItems.map(m => `<tr><td>${m.name}</td><td>₹${m.price}</td><td>₹${m.cost}</td><td><button class="btn-cancel" style="padding:4px 8px;" onclick="updateServer({menuItems:menuItems.filter(x=>x.id!==${m.id})})">Del</button></td></tr>`).join('');
-            document.getElementById('toppingsAdminBody').innerHTML = globalToppings.map(t => `<tr><td>${t.name}</td><td>₹${t.price}</td><td><button class="btn-cancel" style="padding:4px 8px;" onclick="updateServer({globalToppings:globalToppings.filter(x=>x.id!==${t.id})})">Del</button></td></tr>`).join('');
-            document.getElementById('employeeTableBody').innerHTML = employees.map(e => `<tr><td>${e.id}</td><td>${e.name}</td><td>${e.role}</td><td><button class="btn-cancel" style="padding:4px 8px;" onclick="updateServer({employees:employees.filter(x=>x.internalId!==${e.internalId})})">Del</button></td></tr>`).join('');
+            document.getElementById('menuAdminBody').innerHTML = menuItems.map(m => `<tr><td>${m.name}</td><td>₹${m.price}</td><td>₹${m.cost}</td><td><button class="btn-cancel" style="padding:4px 8px;" onclick="state.menuItems=state.menuItems.filter(x=>x.id!==${m.id}); saveState();">Del</button></td></tr>`).join('');
+            document.getElementById('toppingsAdminBody').innerHTML = globalToppings.map(t => `<tr><td>${t.name}</td><td>₹${t.price}</td><td><button class="btn-cancel" style="padding:4px 8px;" onclick="state.globalToppings=state.globalToppings.filter(x=>x.id!==${t.id}); saveState();">Del</button></td></tr>`).join('');
+            document.getElementById('employeeTableBody').innerHTML = employees.map(e => `<tr><td>${e.id}</td><td>${e.name}</td><td>${e.role}</td><td><button class="btn-cancel" style="padding:4px 8px;" onclick="state.employees=state.employees.filter(x=>x.internalId!==${e.internalId}); saveState();">Del</button></td></tr>`).join('');
             document.getElementById('posMenuGrid').innerHTML = menuItems.map(m => `<div class="menu-btn" onclick="openItemPopup(${m.id})">${m.name}<span class="price">₹${m.price}</span></div>`).join('');
             document.getElementById('kitchenGrid').innerHTML = ''; document.getElementById('completedOrdersGrid').innerHTML = '';
             let tRev = 0, tTips = 0, tOrd = 0, tProf = 0, iAnly = {};
@@ -431,6 +399,8 @@
             document.getElementById('analyticsTableBody').innerHTML = Object.entries(iAnly).map(([n,d])=>`<tr><td><b>${n}</b></td><td>${d.q}</td><td>₹${d.r}</td><td style="color:var(--success)">₹${d.p}</td></tr>`).join('');
             document.getElementById('salesTableBody').innerHTML = [...orders].reverse().map(o => `<tr><td>#${o.id}</td><td>${o.items.length} items</td><td>₹${o.total}</td><td>${o.cashier}</td><td>${o.status}</td></tr>`).join('');
         }
+
+        renderAll();
     </script>
 </body>
 </html>
