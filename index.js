@@ -17,16 +17,12 @@ let db = {
 };
 
 const server = http.createServer((req, res) => {
-    // CORS HEADERS (Important for multi-device sync)
+    // Enable CORS so other tablets on your Wi-Fi can talk to this one
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
-    if (req.method === 'OPTIONS') { 
-        res.writeHead(204); 
-        res.end(); 
-        return; 
-    }
+    if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
 
     // API: GET DATA
     if (req.method === 'GET' && req.url === '/api/data') {
@@ -41,7 +37,6 @@ const server = http.createServer((req, res) => {
         req.on('end', () => {
             try {
                 const incomingData = JSON.parse(body);
-                // Safe merge logic
                 db = { ...db, ...incomingData }; 
                 res.writeHead(200); res.end('OK');
             } catch (e) {
@@ -50,15 +45,10 @@ const server = http.createServer((req, res) => {
         });
     } 
 
-    // SERVE INDEX.HTML
+    // SERVE THE HTML FILE
     else if (req.method === 'GET' && (req.url === '/' || req.url === '/index.html')) {
-        const absolutePath = path.join(__dirname, 'index.html'); 
-        fs.readFile(absolutePath, (err, data) => {
-            if (err) { 
-                res.writeHead(404); 
-                res.end(`Error: index.html not found in the root directory.`); 
-                return; 
-            }
+        fs.readFile(path.join(__dirname, 'index.html'), (err, data) => {
+            if (err) { res.writeHead(404); res.end("File Not Found"); return; }
             res.writeHead(200, { 'Content-Type': 'text/html' });
             res.end(data);
         });
@@ -67,10 +57,11 @@ const server = http.createServer((req, res) => {
     }
 });
 
-// Replit uses Port 3000 by default
-const PORT = process.env.PORT || 3000; 
+// KSWEB/Local Port (8080 is standard for local testing)
+const PORT = 8080; 
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`\n---------------------------------`);
-    console.log(`🚀 YUM PRO IS LIVE ON REPLIT (INDEX.JS)`);
-    console.log(`---------------------------------`);
+    console.log(`🚀 YUM PRO IS LIVE LOCALLY`);
+    console.log(`Open on this tablet: http://localhost:${PORT}`);
+    console.log(`---------------------------------\n`);
 });
