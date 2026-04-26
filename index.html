@@ -56,10 +56,8 @@
         #register-layout { display: grid; grid-template-columns: 380px 1fr; gap: 24px; height: 100%; }
 
         .panel { 
-            background: var(--bg-surface); border-radius: 166px; border: 1px solid var(--border); 
+            background: var(--bg-surface); border-radius: 16px; border: 1px solid var(--border); 
             padding: 24px; display: flex; flex-direction: column; overflow: hidden;
-            /* Fixed border radius typo from original CSS (166px -> 16px if you want it square-ish) */
-            border-radius: 16px;
         }
 
         .right-panel { display: grid; grid-template-rows: 250px 1fr; gap: 20px; }
@@ -234,6 +232,9 @@
     <div class="modal-overlay" id="modalContainer"></div>
 
     <script>
+        // CONFIG: Replace with your actual tablet IP!
+        const API_BASE = "http://localhost:3000"; 
+
         let isLANConnected = false; let lastDataHash = "";
         let menuItems = []; let globalToppings = []; let employees = []; let orders = [];
         let orderCounter = 100; let adminPin = '1234'; let managerPin = '5678';
@@ -247,10 +248,9 @@
             'All Round': ['Shareholder', 'Owner']
         };
 
-        // --- LAN SYNC LOGIC ---
         async function fetchState() {
             try {
-                let res = await fetch('/api/data');
+                let res = await fetch(`${API_BASE}/api/data`);
                 if (res.ok) {
                     let text = await res.text();
                     if (!isLANConnected) {
@@ -272,7 +272,7 @@
                 if (isLANConnected) {
                     isLANConnected = false;
                     document.getElementById('lanDot').className = 'lan-indicator offline';
-                    document.getElementById('serverStatus').innerHTML = '<span class="lan-indicator offline"></span>Offline Mode';
+                    document.getElementById('serverStatus').innerHTML = '<span class="lan-indicator offline"></span>Connecting...';
                 }
                 loadFromLocal();
             }
@@ -283,7 +283,7 @@
             const fullState = { menuItems, globalToppings, employees, orders, orderCounter, adminPin, managerPin };
             localStorage.setItem('yum_offline_backup', JSON.stringify(fullState));
             lastDataHash = JSON.stringify(fullState); 
-            try { await fetch('/api/data', { method: 'PATCH', body: JSON.stringify(partialData) }); } catch (e) {}
+            try { await fetch(`${API_BASE}/api/data`, { method: 'PATCH', body: JSON.stringify(partialData) }); } catch (e) {}
             renderAll();
         }
 
@@ -298,7 +298,6 @@
 
         fetchState(); setInterval(fetchState, 3000);
 
-        // --- UI HELPERS ---
         function openModal(contentHtml) {
             const container = document.getElementById('modalContainer');
             container.innerHTML = contentHtml;
@@ -344,25 +343,17 @@
             }
         }
 
-        // --- UPDATED STAFF LOGIC (DUPLICATE ID CHECK) ---
+        // DUPLICATE ID CHECK FOR STAFF
         function addEmployee() {
-            const n = document.getElementById('empName').value;
-            const id = document.getElementById('empId').value;
-            const s = document.getElementById('empSector').value;
-            const r = document.getElementById('empRole').value;
-
+            const n = document.getElementById('empName').value, id = document.getElementById('empId').value, s = document.getElementById('empSector').value, r = document.getElementById('empRole').value;
             if(n && id && s && r) {
-                // Check if ID is already taken
                 const isDuplicate = employees.some(emp => emp.id === id);
                 if (isDuplicate) {
                     alert(`🚨 ERROR: Staff ID "${id}" is already assigned!`);
                     return;
                 }
-
                 employees.push({internalId: Date.now(), id, name:n, sector:s, role:r}); 
                 updateServer({ employees }); 
-                
-                // Clear inputs
                 document.getElementById('empName').value = '';
                 document.getElementById('empId').value = '';
             }
