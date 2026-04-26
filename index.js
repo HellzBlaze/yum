@@ -1,6 +1,8 @@
 const http = require('http');
 const fs = require('fs');
+const path = require('path');
 
+// --- THE MASTER DATABASE ---
 let db = {
     menuItems: [
         { id: 1, name: 'Burger', price: 150, cost: 60 }, 
@@ -15,33 +17,48 @@ let db = {
 };
 
 const server = http.createServer((req, res) => {
+    // CORS HEADERS (Important for multi-device sync)
     res.setHeader('Access-Control-Allow-Origin', '*');
-    // Allow PATCH method for partial data merging
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
-    if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
+    if (req.method === 'OPTIONS') { 
+        res.writeHead(204); 
+        res.end(); 
+        return; 
+    }
 
+    // API: GET DATA
     if (req.method === 'GET' && req.url === '/api/data') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(db));
     } 
+
+    // API: UPDATE DATA
     else if ((req.method === 'POST' || req.method === 'PATCH') && req.url === '/api/data') {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
         req.on('end', () => {
             try {
                 const incomingData = JSON.parse(body);
-                // MERGE the new data into the database safely
-                db = { ...db, ...incomingData };
+                // Safe merge logic
+                db = { ...db, ...incomingData }; 
                 res.writeHead(200); res.end('OK');
             } catch (e) {
                 res.writeHead(400); res.end('Invalid JSON');
             }
         });
     } 
+
+    // SERVE INDEX.HTML
     else if (req.method === 'GET' && (req.url === '/' || req.url === '/index.html')) {
-        fs.readFile('./index.html', (err, data) => {
-            if (err) { res.writeHead(404); res.end('index.html not found'); return; }
+        const absolutePath = path.join(__dirname, 'index.html'); 
+        fs.readFile(absolutePath, (err, data) => {
+            if (err) { 
+                res.writeHead(404); 
+                res.end(`Error: index.html not found in the root directory.`); 
+                return; 
+            }
             res.writeHead(200, { 'Content-Type': 'text/html' });
             res.end(data);
         });
@@ -50,9 +67,10 @@ const server = http.createServer((req, res) => {
     }
 });
 
-const PORT = 8080;
+// Replit uses Port 3000 by default
+const PORT = process.env.PORT || 3000; 
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n🍔 Yum Server is running!`);
-    console.log(`1. On this computer, go to: http://localhost:${PORT}`);
-    console.log(`2. On other LAN devices, go to: http://<YOUR_COMPUTER_IP_ADDRESS>:${PORT}\n`);
+    console.log(`\n---------------------------------`);
+    console.log(`🚀 YUM PRO IS LIVE ON REPLIT (INDEX.JS)`);
+    console.log(`---------------------------------`);
 });
