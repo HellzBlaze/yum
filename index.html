@@ -3,106 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yum Pro OMS</title>
+    <title>Yum Pro - Local Server</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; color: #333; padding: 20px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; max-width: 500px; }
-        h1 { color: #2c3e50; }
-        .btn { padding: 12px 20px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
-        .btn:hover { background: #219150; }
-        input, select { padding: 10px; margin: 10px 0; display: block; width: 95%; border: 1px solid #ddd; border-radius: 6px; }
-        ul { list-style: none; padding: 0; }
-        li { background: #eee; margin: 5px 0; padding: 10px; border-radius: 4px; border-left: 5px solid #27ae60; }
+        body { font-family: 'Trebuchet MS', sans-serif; background: #eceff1; padding: 20px; }
+        .box { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 450px; margin: auto; }
+        h2 { color: #2c3e50; text-align: center; border-bottom: 2px solid #27ae60; padding-bottom: 10px; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-add { background: #27ae60; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .btn-add:hover { background: #219150; }
+        #staffList { margin-top: 20px; padding: 0; }
+        .staff-item { background: #f9f9f9; padding: 10px; margin-bottom: 5px; border-radius: 5px; border-left: 4px solid #3498db; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
 
-    <h1>🍔 Yum Pro OMS</h1>
-
-    <div class="card">
-        <h3>Register New Staff</h3>
-        <input type="text" id="empName" placeholder="Full Name">
-        <input type="text" id="empId" placeholder="Staff ID (e.g. 101)">
-        <select id="empSector">
-            <option value="Front">Front of House</option>
-            <option value="Kitchen">Kitchen</option>
-        </select>
-        <select id="empRole">
+    <div class="box">
+        <h2>🍔 Yum Pro Staff</h2>
+        
+        <input type="text" id="name" placeholder="Staff Name">
+        <input type="text" id="sid" placeholder="Unique Staff ID (e.g. 5001)">
+        
+        <select id="role">
             <option value="Waiter">Waiter</option>
             <option value="Chef">Chef</option>
             <option value="Manager">Manager</option>
         </select>
-        <button class="btn" onclick="addEmployee()">Add Employee</button>
-    </div>
 
-    <div class="card">
-        <h3>Active Staff Members</h3>
-        <ul id="staffList"></ul>
+        <button class="btn-add" onclick="saveStaff()">Register Staff</button>
+
+        <div id="staffList"></div>
     </div>
 
     <script>
         let employees = [];
 
-        // LOAD DATA FROM REPLIT SERVER
-        async function loadData() {
+        // SYNC: Load data from your tablet's local server
+        async function load() {
             try {
-                const response = await fetch('/api/data');
-                const data = await response.json();
+                const res = await fetch('/api/data');
+                const data = await res.json();
                 employees = data.employees || [];
-                renderStaff();
-            } catch (err) {
-                console.error("Connection Failed:", err);
-            }
+                show();
+            } catch (e) { console.log("Server not started yet."); }
         }
 
-        // SAVE DATA TO REPLIT SERVER
-        async function updateServer(payload) {
+        async function saveStaff() {
+            const n = document.getElementById('name').value;
+            const id = document.getElementById('sid').value;
+            const r = document.getElementById('role').value;
+
+            if(!n || !id) return alert("Please fill Name and ID");
+
+            // --- SECURITY: PREVENT DUPLICATE IDS ---
+            const exists = employees.some(e => e.id === id);
+            if (exists) {
+                alert(`⚠️ ID ${id} is already in use by another staff member!`);
+                return;
+            }
+
+            employees.push({ name: n, id: id, role: r });
+            
+            // Send to your local server.js
             await fetch('/api/data', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ employees })
             });
+
+            document.getElementById('name').value = '';
+            document.getElementById('sid').value = '';
+            show();
         }
 
-        function addEmployee() {
-            const n = document.getElementById('empName').value;
-            const id = document.getElementById('empId').value;
-            const s = document.getElementById('empSector').value;
-            const r = document.getElementById('empRole').value;
-
-            if (n && id && s && r) {
-                // --- DUPLICATE ID CHECK ---
-                const isDuplicate = employees.some(emp => emp.id === id);
-                
-                if (isDuplicate) {
-                    alert(`🚨 ERROR: Staff ID "${id}" is already assigned to another employee!`);
-                    return; 
-                }
-
-                // Add to local array
-                employees.push({ id: id, name: n, sector: s, role: r });
-                
-                // Sync with server
-                updateServer({ employees });
-                
-                // Refresh list and clear inputs
-                renderStaff();
-                document.getElementById('empName').value = '';
-                document.getElementById('empId').value = '';
-            } else {
-                alert("Please complete all fields.");
-            }
+        function show() {
+            const container = document.getElementById('staffList');
+            container.innerHTML = employees.map(e => `
+                <div class="staff-item">
+                    <span><strong>${e.id}</strong>: ${e.name}</span>
+                    <small>${e.role}</small>
+                </div>
+            `).join('');
         }
 
-        function renderStaff() {
-            const list = document.getElementById('staffList');
-            list.innerHTML = employees.map(emp => 
-                `<li><strong>ID: ${emp.id}</strong> — ${emp.name} (${emp.role})</li>`
-            ).join('');
-        }
-
-        // Run on startup
-        loadData();
+        load();
     </script>
 </body>
 </html>
