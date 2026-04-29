@@ -97,7 +97,7 @@
             font-size: 0.75rem; text-transform: uppercase; padding: 4px 10px; border-radius: 8px; 
             font-weight: 800; background: var(--bg-card); border: 1px solid var(--border);
         }
-        .order-item-row { padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
+        .order-item-row { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
         .card-actions { display: flex; gap: 8px; margin-top: 20px; }
         .btn-status { flex: 2; background: var(--primary); border: none; padding: 12px; border-radius: 10px; color: white; font-weight: 700; cursor: pointer;}
         .btn-cancel { flex: 1; background: transparent; border: 1.5px solid var(--accent); color: var(--accent); padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer;}
@@ -126,9 +126,14 @@
         .online { background: var(--success); box-shadow: 0 0 10px var(--success); }
         .offline { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
 
+        input { background: var(--bg-deep); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; width: 100%; }
         textarea { width: 100%; background: var(--bg-deep); border: 1px solid var(--border); border-radius: 12px; color: white; padding: 12px; resize: none; margin-top: 10px; }
         .qty-controls { display: flex; align-items: center; gap: 20px; background: var(--bg-deep); padding: 10px 20px; border-radius: 12px; width: fit-content; }
         .qty-btn { background: var(--bg-card); border: 1px solid var(--border); color: white; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.2rem; }
+        
+        /* New Custom Input Grid for perfectly aligned buttons */
+        .input-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 80px; gap: 10px; margin: 20px 0; align-items: center; }
+        .input-grid-small { display: grid; grid-template-columns: 2fr 1fr 80px; gap: 10px; margin: 20px 0; align-items: center; }
     </style>
 </head>
 <body>
@@ -192,20 +197,20 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
             <div class="panel">
                 <h3>Menu Items</h3>
-                <div style="display: flex; gap:10px; margin: 20px 0;">
-                    <input type="text" id="newMenuName" placeholder="Name" style="background:var(--bg-deep); border:1px solid var(--border); color:white; padding:10px; border-radius:8px; flex:2;">
-                    <input type="number" id="newMenuPrice" placeholder="Price" style="background:var(--bg-deep); border:1px solid var(--border); color:white; padding:10px; border-radius:8px; flex:1;">
-                    <input type="number" id="newMenuCost" placeholder="Cost" style="background:var(--bg-deep); border:1px solid var(--border); color:white; padding:10px; border-radius:8px; flex:1;">
-                    <button class="submit-btn" style="margin:0; padding:10px; width:auto;" onclick="addMenuItem()">ADD</button>
+                <div class="input-grid">
+                    <input type="text" id="newMenuName" placeholder="Name">
+                    <input type="number" id="newMenuPrice" placeholder="Price">
+                    <input type="number" id="newMenuCost" placeholder="Cost">
+                    <button class="submit-btn" style="margin:0; padding:10px; height:100%; border-radius:8px;" onclick="addMenuItem()">ADD</button>
                 </div>
                 <table><thead><tr><th>Name</th><th>Price</th><th>Cost</th><th>Action</th></tr></thead><tbody id="menuAdminBody"></tbody></table>
             </div>
             <div class="panel">
-                <h3>Toppings</h3>
-                <div style="display: flex; gap:10px; margin: 20px 0;">
-                    <input type="text" id="newToppingName" placeholder="Name" style="background:var(--bg-deep); border:1px solid var(--border); color:white; padding:10px; border-radius:8px; flex:2;">
-                    <input type="number" id="newToppingPrice" placeholder="Price" style="background:var(--bg-deep); border:1px solid var(--border); color:white; padding:10px; border-radius:8px; flex:1;">
-                    <button class="submit-btn" style="margin:0; padding:10px; width:auto;" onclick="addTopping()">ADD</button>
+                <h3>Toppings & Add-ons</h3>
+                <div class="input-grid-small">
+                    <input type="text" id="newToppingName" placeholder="Name">
+                    <input type="number" id="newToppingPrice" placeholder="Price">
+                    <button class="submit-btn" style="margin:0; padding:10px; height:100%; border-radius:8px;" onclick="addTopping()">ADD</button>
                 </div>
                 <table><thead><tr><th>Name</th><th>Extra</th><th>Action</th></tr></thead><tbody id="toppingsAdminBody"></tbody></table>
             </div>
@@ -217,12 +222,12 @@
             <div class="panel">
                 <h3>Manage Staff</h3>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap:10px; margin: 20px 0;">
-                    <input type="text" id="empName" placeholder="Name" style="background:var(--bg-deep); border:1px solid var(--border); color:white; padding:10px; border-radius:8px;">
-                    <input type="text" id="empId" placeholder="ID" style="background:var(--bg-deep); border:1px solid var(--border); color:white; padding:10px; border-radius:8px;">
-                    <select id="empSector" onchange="updateRoleOptions()" style="background:var(--bg-deep); color:white; border:1px solid var(--border); padding:10px; border-radius:8px;">
+                    <input type="text" id="empName" placeholder="Name">
+                    <input type="text" id="empId" placeholder="ID">
+                    <select id="empSector" onchange="updateRoleOptions()" style="background:var(--bg-deep); color:white; border:1px solid var(--border); padding:12px; border-radius:8px;">
                         <option value="">Sector</option><option value="Register">Register</option><option value="Kitchen">Kitchen</option><option value="Administration">Administration</option><option value="Store">Store</option><option value="All Round">All Round</option>
                     </select>
-                    <select id="empRole" style="background:var(--bg-deep); color:white; border:1px solid var(--border); padding:10px; border-radius:8px;"><option value="">Role</option></select>
+                    <select id="empRole" style="background:var(--bg-deep); color:white; border:1px solid var(--border); padding:12px; border-radius:8px;"><option value="">Role</option></select>
                 </div>
                 <button class="submit-btn" style="margin:0; width:100%;" onclick="addEmployee()">ADD STAFF</button>
                 <table style="margin-top:20px;"><thead><tr><th>ID</th><th>Name</th><th>Role</th><th>Action</th></tr></thead><tbody id="employeeTableBody"></tbody></table>
@@ -242,16 +247,15 @@
 
     <script>
         // --- PEER-TO-PEER ENGINE (Short ID Edition) ---
-        // Generate a random 4 digit code for easy typing
         const shortCode = Math.floor(1000 + Math.random() * 9000).toString();
         const fullPeerId = 'yum-' + shortCode; 
         
         let peer = new Peer(fullPeerId);
-        let connections = []; // Support multiple tablets connecting
+        let connections = []; 
 
         // Core Original State Variables
         let menuItems = [{ id: 1, name: 'Burger', price: 150, cost: 60 }]; 
-        let globalToppings = [{ id: 1, name: 'Extra Cheese', price: 20 }]; 
+        let globalToppings = [{ id: 1, name: 'Extra Cheese', price: 20 }, { id: 2, name: 'No Onions', price: 0 }]; 
         let employees = []; 
         let orders = [];
         let orderCounter = 100; 
@@ -264,7 +268,7 @@
 
         // P2P Setup
         peer.on('open', (id) => {
-            document.getElementById('myPeerId').innerText = shortCode; // Show only the 4 digits!
+            document.getElementById('myPeerId').innerText = shortCode; 
         });
 
         peer.on('connection', (conn) => {
@@ -284,7 +288,6 @@
             conn.on('open', () => {
                 document.getElementById('lanDot').className = 'lan-indicator online';
                 document.getElementById('syncStatus').innerText = "Synced!";
-                // Send current data to the new connection
                 conn.send({ type: 'SYNC', payload: packState() });
             });
             conn.on('data', (data) => {
@@ -302,7 +305,6 @@
             });
         }
 
-        // --- STATE SYNCING ---
         function packState() {
             return { menuItems, globalToppings, employees, orders, orderCounter, adminPin, managerPin };
         }
@@ -313,9 +315,8 @@
             orderCounter = data.orderCounter; adminPin = data.adminPin; managerPin = data.managerPin;
         }
 
-        // Replaces the old "Fetch" updateServer function.
         function updateServer(partialData) {
-            Object.assign(window, partialData); // Update variables globally
+            Object.assign(window, partialData); 
             const payload = packState();
             connections.forEach(conn => {
                 if (conn.open) conn.send({ type: 'SYNC', payload: payload });
@@ -390,18 +391,20 @@
 
         function addMenuItem() {
             const n = document.getElementById('newMenuName').value, p = parseFloat(document.getElementById('newMenuPrice').value), c = parseFloat(document.getElementById('newMenuCost').value)||0;
-            if(n && p) { menuItems.push({id: Date.now(), name:n, price:p, cost:c}); updateServer({ menuItems }); }
+            if(n && p) { menuItems.push({id: Date.now(), name:n, price:p, cost:c}); updateServer({ menuItems }); 
+            document.getElementById('newMenuName').value=''; document.getElementById('newMenuPrice').value=''; document.getElementById('newMenuCost').value=''; }
         }
 
         function addTopping() {
             const n = document.getElementById('newToppingName').value, p = parseFloat(document.getElementById('newToppingPrice').value);
-            if(n && !isNaN(p)) { globalToppings.push({id: Date.now(), name:n, price:p}); updateServer({ globalToppings }); }
+            if(n && !isNaN(p)) { globalToppings.push({id: Date.now(), name:n, price:p}); updateServer({ globalToppings }); 
+            document.getElementById('newToppingName').value=''; document.getElementById('newToppingPrice').value=''; }
         }
 
         function openItemPopup(id) {
             activePopupItem = menuItems.find(m => m.id === id);
             const tops = globalToppings.map(t => `<label style="display:flex; align-items:center; gap:10px; margin-bottom:10px;"><input type="checkbox" value="${t.name}" data-price="${t.price}"> ${t.name} (+₹${t.price})</label>`).join('');
-            openModal(`<div class="modal-content"><div class="modal-main"><h2 style="color:var(--primary); margin-bottom:10px;">${activePopupItem.name}</h2><div style="display:flex; justify-content:space-between; align-items:center; margin: 20px 0;"><span style="font-weight: 800;">Quantity</span><div class="qty-controls"><button class="qty-btn" onclick="changeQty(-1)">−</button><span id="modalQty" style="font-weight:800; font-size:1.2rem;">1</span><button class="qty-btn" onclick="changeQty(1)">+</button></div></div><textarea id="modalNote" placeholder="Kitchen Notes..."></textarea></div><div class="modal-sidebar"><h3>Toppings</h3><div style="max-height: 250px; overflow-y:auto;">${tops}</div><div style="margin-top: auto; display:flex; flex-direction:column; gap:10px;"><button class="submit-btn" style="margin:0;" onclick="confirmItem()">CONFIRM ITEM</button><button class="btn-cancel" onclick="closeModal()">CANCEL</button></div></div></div>`);
+            openModal(`<div class="modal-content"><div class="modal-main"><h2 style="color:var(--primary); margin-bottom:10px;">${activePopupItem.name}</h2><div style="display:flex; justify-content:space-between; align-items:center; margin: 20px 0;"><span style="font-weight: 800;">Quantity</span><div class="qty-controls"><button class="qty-btn" onclick="changeQty(-1)">−</button><span id="modalQty" style="font-weight:800; font-size:1.2rem;">1</span><button class="qty-btn" onclick="changeQty(1)">+</button></div></div><textarea id="modalNote" placeholder="Kitchen Notes..."></textarea></div><div class="modal-sidebar"><h3>Toppings / Add-ons</h3><div style="max-height: 250px; overflow-y:auto;">${tops}</div><div style="margin-top: auto; display:flex; flex-direction:column; gap:10px;"><button class="submit-btn" style="margin:0;" onclick="confirmItem()">CONFIRM ITEM</button><button class="btn-cancel" onclick="closeModal()">CANCEL</button></div></div></div>`);
         }
 
         function changeQty(d) { let c = parseInt(document.getElementById('modalQty').innerText); if(c+d>=1) document.getElementById('modalQty').innerText = c+d; }
@@ -416,7 +419,15 @@
         function removeFromCart(id) { currentCart = currentCart.filter(i => i.id !== id); updateCartUI(); }
 
         function updateCartUI() {
-            let s = 0; document.getElementById('cartItemsList').innerHTML = currentCart.map(i => { s += i.totalPrice; return `<div class="cart-item"><div class="cart-item-header"><span><b>${i.qty}x</b> ${i.name}</span><div>₹${i.totalPrice} <button class="cart-item-remove" onclick="removeFromCart(${i.id})">×</button></div></div></div>`; }).join('');
+            let s = 0; 
+            document.getElementById('cartItemsList').innerHTML = currentCart.map(i => { 
+                s += i.totalPrice; 
+                return `<div class="cart-item">
+                    <div class="cart-item-header"><span><b>${i.qty}x</b> ${i.name}</span><div>₹${i.totalPrice} <button class="cart-item-remove" onclick="removeFromCart(${i.id})">×</button></div></div>
+                    ${i.toppings.length ? `<small style="color:var(--warning)">+ ${i.toppings.join(', ')}</small><br>` : ''}
+                    ${i.note ? `<small style="color:var(--text-dim)">"${i.note}"</small>` : ''}
+                </div>`; 
+            }).join('');
             const t = parseFloat(document.getElementById('cartTip').value) || 0;
             document.getElementById('cartSubtotal').innerText = s; document.getElementById('cartTotal').innerText = s + t;
         }
@@ -449,7 +460,22 @@
             orders.forEach(o => {
                 const conf = {'Pending':{n:'Received',b:'Accept',c:'var(--warning)'}, 'Received':{n:'Preparing',b:'Start',c:'var(--primary)'}, 'Preparing':{n:'Prepared',b:'Ready',c:'var(--primary)'}, 'Prepared':{n:'Collected',b:'Finish',c:'var(--success)'}}[o.status];
                 if(conf) {
-                    const html = `<div class="order-card" style="border-left-color:${conf.c}"><div class="card-header"><span class="order-no">#${o.id}</span><span class="status-pill" style="color:${conf.c}">${o.status}</span></div><div class="order-items-list">${o.items.map(i=>`<div class="order-item-row"><b>${i.qty}x ${i.name}</b>${i.note?`<br><small style="color:var(--accent)">"${i.note}"</small>`:''}</div>`).join('')}</div><div class="card-actions">${conf.n?`<button class="btn-status" onclick="updateOrderStatus(${o.id}, '${conf.n}')">${conf.b}</button>`:''}<button class="btn-cancel" onclick="updateOrderStatus(${o.id}, 'Cancelled')">Cancel</button></div></div>`;
+                    // Kitchen Rendering Logic with Addons Included!
+                    const html = `<div class="order-card" style="border-left-color:${conf.c}">
+                        <div class="card-header"><span class="order-no" style="font-weight:800; font-size:1.2rem;">#${o.id}</span><span class="status-pill" style="color:${conf.c}">${o.status}</span></div>
+                        <div class="order-items-list" style="margin: 15px 0;">
+                            ${o.items.map(i=>`<div class="order-item-row" style="padding: 10px 0;">
+                                <b style="font-size:1.1rem;">${i.qty}x ${i.name}</b>
+                                ${i.toppings && i.toppings.length ? `<br><span style="color:var(--warning); font-weight:600;">+ ${i.toppings.join(', ')}</span>` : ''}
+                                ${i.note ? `<br><span style="color:var(--accent); font-style:italic;">"${i.note}"</span>` : ''}
+                            </div>`).join('')}
+                        </div>
+                        <div class="card-actions">
+                            ${conf.n?`<button class="btn-status" onclick="updateOrderStatus(${o.id}, '${conf.n}')">${conf.b}</button>`:''}
+                            <button class="btn-cancel" onclick="updateOrderStatus(${o.id}, 'Cancelled')">Cancel</button>
+                        </div>
+                    </div>`;
+                    
                     if(['Pending','Received','Preparing'].includes(o.status)) document.getElementById('kitchenGrid').innerHTML += html;
                     else if(o.status === 'Prepared') document.getElementById('completedOrdersGrid').innerHTML += html;
                 }
